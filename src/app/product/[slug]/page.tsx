@@ -27,7 +27,7 @@ export default function Detail({ params }: { params: Promise<{ slug: string }> }
             <section className="grid min-h-[calc(100vh-5rem)] lg:grid-cols-[58%_42%]">
                 <div className="bg-secondary">
                     <img
-                        src={p.image}
+                        src={(p.image as any).src || p.image}
                         alt={`${p.name} in Veloiz packaging`}
                         width={1200}
                         height={1504}
