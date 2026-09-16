@@ -51,24 +51,47 @@ export async function createOrder({ data: input }: { data: unknown }) {
   const total = subtotal + delivery;
   const number = orderNumber();
 
-  const keyId = process.env["RAZORPAY_KEY_ID"];
-  const keySecret = process.env["RAZORPAY_KEY_SECRET"];
-  let razorpayOrderId: string | null = null;
+  const appId = process.env["CASHFREE_APP_ID"];
+  const secretKey = process.env["CASHFREE_SECRET_KEY"];
+  const env = process.env["CASHFREE_ENVIRONMENT"] || "SANDBOX";
+  const baseUrl = env === "PRODUCTION" ? "https://api.cashfree.com/pg" : "https://sandbox.cashfree.com/pg";
 
-  if (keyId && keySecret) {
-    const response = await fetch("https://api.razorpay.com/v1/orders", {
+  let paymentSessionId: string | null = null;
+  let cashfreeOrderId = number;
+
+  if (appId && secretKey) {
+    // Generate Order in Cashfree
+    const response = await fetch(`${baseUrl}/orders`, {
       method: "POST",
       headers: {
-        "content-type": "application/json",
-        Authorization: `Basic ${btoa(`${keyId}:${keySecret}`)}`,
+        "Content-Type": "application/json",
+        "x-client-id": appId,
+        "x-client-secret": secretKey,
+        "x-api-version": "2023-08-01",
       },
-      body: JSON.stringify({ amount: total, currency: "INR", receipt: number }),
+      body: JSON.stringify({
+        order_amount: total / 100, // Cashfree requires decimal layout for INR (Rupees)
+        order_currency: "INR",
+        order_id: cashfreeOrderId,
+        customer_details: {
+          customer_id: data.email.replace(/[^a-zA-Z0-9]/g, '').substring(0, 50),
+          customer_name: data.customer_name,
+          customer_email: data.email,
+          customer_phone: data.phone,
+        },
+        order_meta: {
+          return_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/order/${cashfreeOrderId}?verify=true`
+        }
+      }),
     });
+
     if (!response.ok) {
-      console.error("Razorpay order failed", await response.text());
+      console.error("Cashfree order failed", await response.text());
       throw new Error("Payment provider unavailable. Please try again.");
     }
-    razorpayOrderId = ((await response.json()) as { id: string }).id;
+
+    const gatewayData = await response.json();
+    paymentSessionId = gatewayData.payment_session_id;
   }
 
   const { data: order, error: orderError } = await supabaseAdmin
@@ -82,10 +105,12 @@ export async function createOrder({ data: input }: { data: unknown }) {
       subtotal_paise: subtotal,
       delivery_paise: delivery,
       total_paise: total,
-      razorpay_order_id: razorpayOrderId,
+      cashfree_order_id: cashfreeOrderId,
+      cashfree_session_id: paymentSessionId,
     })
     .select("id, order_number")
     .single();
+
   if (orderError || !order) throw new Error(orderError?.message ?? "Could not place order");
 
   const { error: itemsError } = await supabaseAdmin
@@ -99,47 +124,54 @@ export async function createOrder({ data: input }: { data: unknown }) {
     totalPaise: total,
     subtotalPaise: subtotal,
     deliveryPaise: delivery,
-    razorpayOrderId,
-    razorpayKeyId: keyId ?? null,
-    paymentConfigured: Boolean(keyId && keySecret),
+    paymentSessionId,
+    paymentConfigured: Boolean(appId && secretKey),
   };
 }
 
-const verifySchema = z.object({
-  orderId: z.string().uuid(),
-  razorpay_order_id: z.string(),
-  razorpay_payment_id: z.string(),
-  razorpay_signature: z.string(),
-});
+export async function verifyPayment({ orderNumber }: { orderNumber: string }) {
+  const appId = process.env["CASHFREE_APP_ID"];
+  const secretKey = process.env["CASHFREE_SECRET_KEY"];
+  const env = process.env["CASHFREE_ENVIRONMENT"] || "SANDBOX";
+  const baseUrl = env === "PRODUCTION" ? "https://api.cashfree.com/pg" : "https://sandbox.cashfree.com/pg";
 
-export async function verifyPayment({ data: input }: { data: unknown }) {
-  const data = verifySchema.parse(input);
-  const keySecret = process.env["RAZORPAY_KEY_SECRET"];
-  if (!keySecret) throw new Error("Payments are not configured");
+  if (!appId || !secretKey) throw new Error("Payments are not configured");
 
-  const { createHmac, timingSafeEqual } = await import("crypto");
-  const expected = createHmac("sha256", keySecret)
-    .update(`${data.razorpay_order_id}|${data.razorpay_payment_id}`)
-    .digest("hex");
-  const given = Buffer.from(data.razorpay_signature);
-  const want = Buffer.from(expected);
-  if (given.length !== want.length || !timingSafeEqual(given, want)) {
-    throw new Error("Payment verification failed");
+  // Fetch the order from Cashfree to verify payment status securely over server-to-server
+  const response = await fetch(`${baseUrl}/orders/${orderNumber}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "x-client-id": appId,
+      "x-client-secret": secretKey,
+      "x-api-version": "2023-08-01",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Payment provider returned an error.");
+  }
+
+  const gatewayData = await response.json();
+
+  if (gatewayData.order_status !== "PAID") {
+    throw new Error("Payment is not PAID yet.");
   }
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: order, error: lookupError } = await supabaseAdmin
     .from("orders")
-    .select("id, order_number, razorpay_order_id")
-    .eq("id", data.orderId)
+    .select("id, order_number")
+    .eq("order_number", orderNumber)
     .single();
+
   if (lookupError || !order) throw new Error("Order not found");
-  if (order.razorpay_order_id !== data.razorpay_order_id) throw new Error("Payment verification failed");
 
   const { error } = await supabaseAdmin.rpc("finalize_paid_order", {
-    p_order_id: data.orderId,
-    p_payment_id: data.razorpay_payment_id,
+    p_order_id: order.id,
+    p_payment_id: String(gatewayData.cf_order_id),
   });
+
   if (error) throw new Error(error.message);
 
   return { orderNumber: order.order_number };

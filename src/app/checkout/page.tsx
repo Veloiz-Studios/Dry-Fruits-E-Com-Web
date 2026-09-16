@@ -13,18 +13,8 @@ import { useCart } from "@/components/cart-context";
 import { money, priceFor } from "@/lib/catalog";
 import { createOrder, verifyPayment } from "@/lib/orders.functions";
 
-type RazorpayResponse = { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string };
-
-function loadRazorpay(): Promise<boolean> {
-    return new Promise((resolve) => {
-        if ((window as unknown as { Razorpay?: unknown }).Razorpay) return resolve(true);
-        const script = document.createElement("script");
-        script.src = "https://checkout.razorpay.com/v1/checkout.js";
-        script.onload = () => resolve(true);
-        script.onerror = () => resolve(false);
-        document.body.appendChild(script);
-    });
-}
+// @ts-expect-error Types not provided by cashfree package
+import { load } from '@cashfreepayments/cashfree-js';
 
 function Field({ id, label, value, onChange, type = "text" }: { id: string; label: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; type?: string }) {
     return (
@@ -62,42 +52,31 @@ export default function Checkout() {
                 },
             });
 
-            if (!order.paymentConfigured || !order.razorpayOrderId || !order.razorpayKeyId) {
+            if (!order.paymentConfigured || !order.paymentSessionId) {
                 toast.info("Order reserved. Online payment is not switched on yet.");
                 cart.clear();
                 router.push("/order/" + order.orderNumber);
                 return;
             }
 
-            const ready = await loadRazorpay();
-            if (!ready) throw new Error("Could not reach the payment window.");
             setStage("paying");
 
-            const razorpay = new (window as unknown as { Razorpay: new (options: unknown) => { open: () => void } }).Razorpay({
-                key: order.razorpayKeyId,
-                amount: order.totalPaise,
-                currency: "INR",
-                name: "Veloiz",
-                description: `Order ${order.orderNumber}`,
-                order_id: order.razorpayOrderId,
-                prefill: { name: form.customer_name, email: form.email, contact: form.phone },
-                theme: { color: "#C98A2C" },
-                modal: { ondismiss: () => { setStage("details"); setBusy(false); toast.error("Payment cancelled. Nothing was charged."); } },
-                handler: async (response: RazorpayResponse) => {
-                    try {
-                        await verifyPayment({ data: { orderId: order.orderId, ...response } });
-                        cart.clear();
-                        router.push("/order/" + order.orderNumber);
-                    } catch (error) {
-                        toast.error(error instanceof Error ? error.message : "Payment could not be verified.");
-                        setStage("details");
-                        setBusy(false);
-                    }
-                },
+            // Load Cashfree JS SDK
+            const cashfree = await load({
+                mode: process.env.NEXT_PUBLIC_CASHFREE_ENVIRONMENT === "PRODUCTION" ? "production" : "sandbox",
             });
-            razorpay.open();
+
+            // Hand over the payment session to Cashfree SDK for redirect/modal checkout
+            cashfree.checkout({
+                paymentSessionId: order.paymentSessionId,
+            });
+
+            // Note: Cashfree automatically redirects to the return_url defined in the backend server action.
+            cart.clear(); // We can clear the cart safely now
+
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Something went wrong.");
+            setStage("details");
             setBusy(false);
         }
     }
