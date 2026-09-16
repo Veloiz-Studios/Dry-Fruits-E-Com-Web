@@ -4,23 +4,38 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StoreShell } from "@/components/store-shell";
-import { getOrderByNumber } from "@/lib/orders.functions";
+import { getOrderByNumber, verifyPayment } from "@/lib/orders.functions";
 import { ORDER_PIPELINE, paise, weightLabel } from "@/lib/admin-data";
 import { use, useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function Confirmation({ params }: { params: Promise<{ number: string }> }) {
     const resolvedParams = use(params);
+    const searchParams = useSearchParams();
+    const router = useRouter();
     const number = resolvedParams.number;
 
     const [data, setData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        getOrderByNumber({ data: { orderNumber: number } })
-            .then(setData)
-            .catch(console.error)
-            .finally(() => setIsLoading(false));
-    }, [number]);
+        async function fetchOrder() {
+            try {
+                if (searchParams.get("verify") === "true") {
+                    await verifyPayment({ orderNumber: number });
+                    router.replace(`/order/${number}`); // Clean URL
+                }
+            } catch (err) {
+                console.error("Payment verification failed:", err);
+            } finally {
+                getOrderByNumber({ data: { orderNumber: number } })
+                    .then(setData)
+                    .catch(console.error)
+                    .finally(() => setIsLoading(false));
+            }
+        }
+        fetchOrder();
+    }, [number, searchParams, router]);
 
     return (
         <StoreShell>
