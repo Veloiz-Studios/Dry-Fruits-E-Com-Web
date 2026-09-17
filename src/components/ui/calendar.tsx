@@ -73,6 +73,7 @@ function Calendar({
             : "[&>svg]:text-muted-foreground flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-sm [&>svg]:size-3.5",
           defaultClassNames.caption_label,
         ),
+        // @ts-expect-error - table is a valid target but removed in latest RDP types
         table: "w-full border-collapse",
         weekdays: cn("flex", defaultClassNames.weekdays),
         weekday: cn(

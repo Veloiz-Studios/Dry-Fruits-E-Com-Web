@@ -2,7 +2,7 @@ import almonds from "@/assets/veloiz-almonds.jpg";
 import cashews from "@/assets/veloiz-cashews.jpg";
 import pistachios from "@/assets/veloiz-pistachios.jpg";
 
-export type Product = { id: string; slug: string; name: string; category: string; image: string; short: string; long: string; stock: number; prices: Record<number, number>; stocks?: Record<number, number> };
+export type Product = { id: string; slug: string; name: string; category: string; image: any; short: string; long: string; stock: number; prices: Record<number, number>; stocks?: Record<number, number> };
 
 export const products: Product[] = [
   { id: "1", slug: "mamra-almonds", name: "Mamra Almonds", category: "Almonds", image: almonds, short: "Small-batch almonds with a deep, lingering crunch.", long: "Naturally irregular and intensely flavoured, sourced from select mountain orchards and packed in short runs for peak freshness.", stock: 7, prices: { 250: 725, 500: 1390, 1000: 2690 } },
