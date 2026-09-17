@@ -160,6 +160,16 @@ export async function deleteCategory(categoryId: string) {
 
 export async function updateOrderStatus(orderId: string, newStatus: string) {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("orders").update({ order_status: newStatus }).eq("id", orderId);
+    const { data, error } = await supabaseAdmin.from("orders").update({ order_status: newStatus }).eq("id", orderId).select("order_number").single();
     if (error) throw new Error(error.message);
+
+    if (data?.order_number) {
+        const channel = supabaseAdmin.channel(`order-tracker-${data.order_number}`);
+        await channel.send({
+            type: 'broadcast',
+            event: 'status_update',
+            payload: { order_status: newStatus }
+        });
+        await supabaseAdmin.removeChannel(channel);
+    }
 }

@@ -8,6 +8,7 @@ import { getOrderByNumber, verifyPayment } from "@/lib/orders.functions";
 import { ORDER_PIPELINE, paise, weightLabel } from "@/lib/admin-data";
 import { use, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Confirmation({ params }: { params: Promise<{ number: string }> }) {
     const resolvedParams = use(params);
@@ -19,6 +20,14 @@ export default function Confirmation({ params }: { params: Promise<{ number: str
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        // Save to device memory for guest tracking
+        try {
+            const memory = JSON.parse(localStorage.getItem('veloiz_vault') || '[]');
+            if (!memory.includes(number)) {
+                localStorage.setItem('veloiz_vault', JSON.stringify([number, ...memory]));
+            }
+        } catch (e) { }
+
         async function fetchOrder() {
             try {
                 if (searchParams.get("verify") === "true") {
@@ -35,6 +44,20 @@ export default function Confirmation({ params }: { params: Promise<{ number: str
             }
         }
         fetchOrder();
+
+        const channel = supabase
+            .channel(`order-tracker-${number}`)
+            .on('broadcast', { event: 'status_update' }, (payload) => {
+                setData((prev: any) => ({
+                    ...prev,
+                    order_status: payload.payload.order_status
+                }));
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [number, searchParams, router]);
 
     return (
