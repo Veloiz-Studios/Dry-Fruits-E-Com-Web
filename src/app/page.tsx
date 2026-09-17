@@ -8,4 +8,102 @@ import { StoreShell } from "@/components/store-shell";
 import { useLiveCatalog } from "@/lib/useLiveCatalog";
 import hero from "@/assets/veloiz-almonds.jpg";
 
-export default function Index() { const { products } = useLiveCatalog(); const cats = ["Almonds", "Cashews", "Pistachios", "Walnuts", "Raisins", "Dates"]; return <StoreShell><section className="relative min-h-[calc(100vh-5rem)] overflow-hidden border-b editorial-rule"><img src={hero.src} alt="Veloiz Mamra almonds in signature packaging" width={1200} height={1504} className="absolute inset-y-0 right-0 h-full w-full object-cover md:w-[58%]" /><div className="absolute inset-0 bg-background/45 md:hidden" /><div className="relative mx-auto flex min-h-[calc(100vh-5rem)] max-w-[1440px] items-end px-5 pb-16 md:items-center md:px-10"><div className="max-w-2xl"><p className="mb-5 text-xs uppercase tracking-[0.22em]">Selected slowly · packed this week</p><h1 className="text-[clamp(3.8rem,8vw,8.5rem)] leading-[0.82]">Good judgement,<br /><em>by the handful.</em></h1><p className="mt-8 max-w-md text-base leading-7">The dry fruits you remember being chosen one by one—graded with patience, packed without delay.</p><Button asChild size="lg" variant="ink" className="mt-8 h-14 px-7"><Link href="/shop">Enter the pantry <ArrowRight /></Link></Button></div></div></section><section className="mx-auto max-w-[1440px] px-5 py-24 md:px-10"><div className="mb-12 grid gap-5 md:grid-cols-2"><p className="text-xs uppercase tracking-[0.2em]">The pantry, arranged</p><h2 className="max-w-xl text-5xl leading-none md:text-7xl">Six staples.<br />No weak links.</h2></div><div className="grid border-l border-t editorial-rule sm:grid-cols-2 lg:grid-cols-3">{cats.map((c, i) => <Link key={c} href={`/shop?category=${c}`} className="group flex min-h-48 flex-col justify-between border-b border-r editorial-rule p-6 transition hover:bg-secondary md:min-h-60"><span className="text-xs">0{i + 1}</span><span className="flex items-end justify-between font-display text-4xl md:text-5xl">{c}<ArrowRight className="transition group-hover:translate-x-1" /></span></Link>)}</div></section><section className="bg-paper py-24"><div className="mx-auto max-w-[1440px] px-5 md:px-10"><div className="mb-12 flex items-end justify-between"><div><p className="text-xs uppercase tracking-[0.2em]">Most reached for</p><h2 className="mt-3 text-5xl md:text-7xl">The daily good.</h2></div><Link href="/shop" className="hidden border-b editorial-rule pb-1 md:block">See everything</Link></div><div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">{products.slice(0, 3).map(p => <ProductCard key={p.id} product={p} />)}</div></div></section><section className="grid border-y editorial-rule md:grid-cols-2"><div className="px-5 py-20 md:px-16 md:py-28"><p className="text-xs uppercase tracking-[0.2em]">Our standard</p><h2 className="mt-5 text-5xl leading-[0.95] md:text-7xl">Freshness is not a badge. It is a schedule.</h2></div><div className="grid border-t editorial-rule md:border-l md:border-t-0"><div className="border-b editorial-rule p-8"><span className="text-primary">01</span><h3 className="mt-8 text-3xl">Source for character</h3><p className="mt-3 text-muted-foreground">Origin, harvest, size and taste matter more than uniformity.</p></div><div className="border-b editorial-rule p-8"><span className="text-primary">02</span><h3 className="mt-8 text-3xl">Grade by hand</h3><p className="mt-3 text-muted-foreground">Every batch is checked for colour, aroma, texture and finish.</p></div><div className="p-8"><span className="text-primary">03</span><h3 className="mt-8 text-3xl">Pack in short runs</h3><p className="mt-3 text-muted-foreground">Less warehouse time. More of what the ingredient intended.</p></div></div></section><section className="mx-auto flex max-w-[1440px] flex-col items-start justify-between gap-8 px-5 py-24 md:flex-row md:items-end md:px-10"><h2 className="max-w-3xl text-6xl leading-[0.9] md:text-8xl">Build a better pantry.</h2><Button asChild size="lg" variant="ink" className="h-14"><Link href="/shop">Shop Veloiz <ArrowRight /></Link></Button></section></StoreShell> }
+export default function Index() {
+    const { products } = useLiveCatalog();
+    const cats = ["Almonds", "Cashews", "Pistachios", "Walnuts", "Raisins", "Dates"];
+
+    return (
+        <StoreShell>
+            <section className="relative min-h-[calc(100vh-5rem)] overflow-hidden border-b editorial-rule">
+                <img src={hero.src} alt="Veloiz Mamra almonds in signature packaging" width={1200} height={1504} className="absolute inset-y-0 right-0 h-full w-full object-cover md:w-[58%] transition-transform duration-[2s] ease-out hover:scale-105" />
+                <div className="absolute inset-0 bg-background/45 md:hidden" />
+                <div className="relative mx-auto flex min-h-[calc(100vh-5rem)] max-w-[1440px] items-end px-5 pb-16 md:items-center md:px-10">
+                    <div className="max-w-2xl">
+                        <p className="mb-5 text-xs uppercase tracking-[0.22em] animate-in slide-in-from-bottom-2 fade-in duration-1000 fill-mode-both">Selected slowly · packed this week</p>
+                        <h1 className="text-[clamp(3.8rem,8vw,8.5rem)] leading-[0.82] animate-in slide-in-from-bottom-4 fade-in duration-1000 delay-150 fill-mode-both">Good judgement,<br /><em>by the handful.</em></h1>
+                        <p className="mt-8 max-w-md text-base leading-7 animate-in slide-in-from-bottom-4 fade-in duration-1000 delay-300 fill-mode-both">The dry fruits you remember being chosen one by one—graded with patience, packed without delay.</p>
+                        <Button asChild size="lg" variant="ink" className="group mt-8 h-14 px-7 animate-in slide-in-from-bottom-4 fade-in duration-1000 delay-500 fill-mode-both transition-all hover:scale-105 hover:shadow-xl active:scale-95">
+                            <Link href="/shop" className="flex items-center gap-3">
+                                Enter the pantry
+                                <ArrowRight className="h-4 w-4 transition-transform duration-300 ease-out group-hover:translate-x-1 group-active:translate-x-2" />
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+            </section>
+
+            <section className="mx-auto max-w-[1440px] px-5 py-24 md:px-10">
+                <div className="mb-12 grid gap-5 md:grid-cols-2">
+                    <p className="text-xs uppercase tracking-[0.2em]">The pantry, arranged</p>
+                    <h2 className="max-w-xl text-5xl leading-none md:text-7xl">Six staples.<br />No weak links.</h2>
+                </div>
+                <div className="grid border-l border-t editorial-rule sm:grid-cols-2 lg:grid-cols-3">
+                    {cats.map((c, i) => (
+                        <Link key={c} href={`/shop?category=${c}`} className="group flex min-h-48 flex-col justify-between border-b border-r editorial-rule p-6 transition-all duration-500 hover:bg-black hover:text-white md:min-h-60 relative overflow-hidden">
+                            <span className="text-xs transition-opacity duration-300 group-hover:opacity-70">0{i + 1}</span>
+                            <span className="flex items-end justify-between font-display text-4xl md:text-5xl relative z-10 transition-transform duration-300 group-hover:-translate-y-1">
+                                {c}
+                                <ArrowRight className="transition-all duration-300 ease-out opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0" />
+                            </span>
+                            <div className="absolute inset-0 bg-white/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
+                        </Link>
+                    ))}
+                </div>
+            </section>
+
+            <section className="bg-paper py-24">
+                <div className="mx-auto max-w-[1440px] px-5 md:px-10">
+                    <div className="mb-12 flex items-end justify-between">
+                        <div>
+                            <p className="text-xs uppercase tracking-[0.2em]">Most reached for</p>
+                            <h2 className="mt-3 text-5xl md:text-7xl">The daily good.</h2>
+                        </div>
+                        <Link href="/shop" className="hidden relative border-b border-transparent pb-1 md:block hover:text-primary transition-colors after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-full after:origin-right after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 hover:after:origin-left hover:after:scale-x-100">
+                            See everything
+                        </Link>
+                    </div>
+                    <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                        {products.slice(0, 3).map(p => <ProductCard key={p.id} product={p} />)}
+                    </div>
+                </div>
+            </section>
+
+            <section className="grid border-y editorial-rule md:grid-cols-2">
+                <div className="px-5 py-20 md:px-16 md:py-28 group relative overflow-hidden">
+                    <div className="absolute inset-0 bg-secondary/50 -translate-x-full transition-transform duration-[1s] ease-out group-hover:translate-x-0" />
+                    <div className="relative z-10">
+                        <p className="text-xs uppercase tracking-[0.2em] transition-transform duration-500 group-hover:translate-x-2">Our standard</p>
+                        <h2 className="mt-5 text-5xl leading-[0.95] md:text-7xl transition-transform duration-700 ease-out group-hover:translate-x-2">Freshness is not a badge. It is a schedule.</h2>
+                    </div>
+                </div>
+                <div className="grid border-t editorial-rule md:border-l md:border-t-0">
+                    <div className="group border-b editorial-rule p-8 transition-colors duration-500 hover:bg-secondary">
+                        <span className="text-primary transition-all duration-300 group-hover:inline-block group-hover:-translate-y-1">01</span>
+                        <h3 className="mt-8 text-3xl">Source for character</h3>
+                        <p className="mt-3 text-muted-foreground">Origin, harvest, size and taste matter more than uniformity.</p>
+                    </div>
+                    <div className="group border-b editorial-rule p-8 transition-colors duration-500 hover:bg-secondary">
+                        <span className="text-primary transition-all duration-300 group-hover:inline-block group-hover:-translate-y-1">02</span>
+                        <h3 className="mt-8 text-3xl">Grade by hand</h3>
+                        <p className="mt-3 text-muted-foreground">Every batch is checked for colour, aroma, texture and finish.</p>
+                    </div>
+                    <div className="group p-8 transition-colors duration-500 hover:bg-secondary">
+                        <span className="text-primary transition-all duration-300 group-hover:inline-block group-hover:-translate-y-1">03</span>
+                        <h3 className="mt-8 text-3xl">Pack in short runs</h3>
+                        <p className="mt-3 text-muted-foreground">Less warehouse time. More of what the ingredient intended.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section className="mx-auto flex max-w-[1440px] flex-col items-start justify-between gap-8 px-5 py-24 md:flex-row md:items-end md:px-10">
+                <h2 className="max-w-3xl text-6xl leading-[0.9] md:text-8xl transition-all duration-500 hover:text-primary cursor-default">Build a better pantry.</h2>
+                <Button asChild size="lg" variant="ink" className="group h-14 transition-all duration-300 hover:scale-105 active:scale-95">
+                    <Link href="/shop" className="flex items-center gap-2">
+                        Shop Veloiz
+                        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                    </Link>
+                </Button>
+            </section>
+        </StoreShell>
+    );
+}
