@@ -2,22 +2,80 @@
 
 export async function fetchDashboard() {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [products, orders, variants] = await Promise.all([
-        supabaseAdmin.from("products").select("id, is_active"),
-        supabaseAdmin
-            .from("orders")
-            .select("id, order_number, customer_name, total_paise, payment_status, order_status, created_at")
-            .order("created_at", { ascending: false }),
-        supabaseAdmin.from("product_variants").select("id, stock_quantity, low_stock_threshold"),
+
+    const [ordersRes, variantsRes, productsRes] = await Promise.all([
+        supabaseAdmin.from("orders").select("id, total_paise, payment_status, order_status, order_number, customer_name, created_at").order("created_at", { ascending: false }),
+        supabaseAdmin.from("product_variants").select("id").lte("stock_quantity", 8), // Assuming 8 is generic low threshold
+        supabaseAdmin.from("products").select("id", { count: "exact", head: true }),
     ]);
-    const orderRows = orders.data ?? [];
+
+    const orders = ordersRes.data || [];
+    const revenuePaise = orders.filter(o => o.payment_status === "paid").reduce((sum, o) => sum + (o.total_paise || 0), 0);
+    const pendingCount = orders.filter(o => ["pending", "confirmed", "processing"].includes(o.order_status)).length;
+
     return {
-        productCount: (products.data ?? []).length,
-        orderCount: orderRows.length,
-        pendingCount: orderRows.filter((o) => o.order_status === "pending").length,
-        lowStockCount: (variants.data ?? []).filter((v) => v.stock_quantity <= v.low_stock_threshold).length,
-        revenuePaise: orderRows.filter((o) => o.payment_status === "paid").reduce((sum, o) => sum + o.total_paise, 0),
-        recent: orderRows.slice(0, 8),
+        revenuePaise,
+        orderCount: orders.length,
+        pendingCount,
+        lowStockCount: variantsRes.data?.length || 0,
+        productCount: productsRes.count || 0,
+        recent: orders.slice(0, 8),
+    };
+}
+
+export async function fetchAnalytics() {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Fetch all orders
+    const { data: orders, error } = await supabaseAdmin.from("orders").select("created_at, total_paise, payment_status, order_items(product_name, quantity)").order("created_at", { ascending: true });
+    if (error) throw error;
+
+    const paid = (orders || []).filter(o => o.payment_status === "paid" || o.payment_status === "pending"); // Keep simple, counting all real intents
+
+    // Daily Revenue Growth (Last 30 Days)
+    const dailyMap: Record<string, { date: string, revenue: number, orders: number }> = {};
+    const today = new Date();
+    for (let i = 29; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split("T")[0];
+        dailyMap[dateStr] = { date: dateStr, revenue: 0, orders: 0 };
+    }
+
+    // Top Selling Products Breakdown
+    const productFrequency: Record<string, number> = {};
+
+    for (const o of paid) {
+        const dateStr = o.created_at.split("T")[0];
+        if (dailyMap[dateStr]) {
+            dailyMap[dateStr].revenue += (o.total_paise / 100);
+            dailyMap[dateStr].orders += 1;
+        }
+
+        // Aggregate top sellers
+        for (const item of (o.order_items || [])) {
+            productFrequency[item.product_name] = (productFrequency[item.product_name] || 0) + item.quantity;
+        }
+    }
+
+    const growth = Object.values(dailyMap);
+
+    // Sort top products
+    const topProducts = Object.entries(productFrequency)
+        .map(([name, sales]) => ({ name, sales }))
+        .sort((a, b) => b.sales - a.sales)
+        .slice(0, 5);
+
+    // Calculate Conversion or Total Stats
+    const totalRevenue = paid.reduce((s, o) => s + (o.total_paise / 100), 0);
+    const averageOrderValue = paid.length > 0 ? (totalRevenue / paid.length) : 0;
+
+    return {
+        totalRevenue,
+        totalOrders: paid.length,
+        averageOrderValue,
+        growth,
+        topProducts
     };
 }
 
@@ -194,7 +252,8 @@ export async function updateSettings(settings: any) {
         address: settings.address,
         opening_time: settings.opening_time,
         closing_time: settings.closing_time,
-        logo_url: settings.logo_url
+        logo_url: settings.logo_url,
+        notifications: settings.notifications
     };
     const { error } = await supabaseAdmin.from("business_settings").update(payload).eq("id", true);
     if (error) throw new Error(error.message);

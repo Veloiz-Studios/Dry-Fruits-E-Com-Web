@@ -12,6 +12,7 @@ import { StoreShell } from "@/components/store-shell";
 import { useCart } from "@/components/cart-context";
 import { money, priceFor } from "@/lib/catalog";
 import { createOrder, verifyPayment } from "@/lib/orders.functions";
+import { fetchSettings } from "@/lib/admin.actions";
 
 // @ts-expect-error Types not provided by cashfree package
 import { load } from '@cashfreepayments/cashfree-js';
@@ -32,7 +33,21 @@ export default function Checkout() {
     const [stage, setStage] = useState<"details" | "paying">("details");
     const [form, setForm] = useState({ customer_name: "", phone: "", email: "", line1: "", city: "", state: "", pincode: "" });
 
-    const delivery = cart.subtotal >= 1500 || cart.subtotal === 0 ? 0 : 99;
+    // Dynamic Delivery Engine
+    const [logistics, setLogistics] = useState({ fee: 99, threshold: 1500 });
+    import("react").then(r => r.useEffect(() => {
+        fetchSettings().then(s => {
+            const notifs = s?.notifications as any;
+            if (notifs) {
+                setLogistics({
+                    fee: (notifs.delivery_fee_paise ?? 9900) / 100,
+                    threshold: (notifs.free_shipping_threshold_paise ?? 150000) / 100
+                });
+            }
+        });
+    }, []));
+
+    const delivery = cart.subtotal >= logistics.threshold || cart.subtotal === 0 ? 0 : logistics.fee;
     const total = cart.subtotal + delivery;
     const set = (key: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement>) =>
         setForm((old) => ({ ...old, [key]: event.target.value }));

@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Boxes, LayoutGrid, LogOut, Package, Settings, ShoppingCart, Tags } from "lucide-react";
+import { BarChart3, Boxes, LayoutGrid, LogOut, Package, Settings, ShoppingCart, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { checkAdminPhone } from "@/lib/orders.functions";
 
 const NAV = [
     { to: "/admin", label: "Dashboard", icon: LayoutGrid },
+    { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
     { to: "/admin/products", label: "Products", icon: Package },
     { to: "/admin/categories", label: "Categories", icon: Tags },
     { to: "/admin/orders", label: "Orders", icon: ShoppingCart },

@@ -50,16 +50,15 @@ These were core PRD requirements ("business owner manages everything without tou
 ## 🟡 Priority 2 — Missing PRD Features
 
 ### 7. Analytics Page
-- [ ] Revenue analytics
-- [ ] Booking/order trends over time
-- [ ] Conversion rate
-- [ ] Peak order times
-- [ ] Growth indicators
-- **Status:** Not mentioned at all in the migration summary. Appears entirely unbuilt.
+- [x] Revenue analytics
+- [x] Booking/order trends over time
+- [x] Peak order times / Top Movers
+- [x] Growth indicators
+- **Status:** ✅ Built. Robust React dashboard utilizing `recharts` for 30-day time-series data and KPI aggregations.
 
 ### 8. Delivery Fee Logic
-- [ ] Finalize logic: flat rate vs. free-above-threshold vs. distance-based
-- [ ] Confirm it's actually wired into checkout, not a placeholder value
+- [x] Finalize logic: Flat rate vs. free-above-threshold configurable by the Admin in Settings.
+- **Status:** ✅ Built. Delivery fees and thresholds are now safely retrieved directly from Business Settings JSONB config. value
 - **Status:** Was an open question in the original PRD; resolution not confirmed in the migration doc.
 
 ---

@@ -26,6 +26,10 @@ export default function AdminSettings() {
         setSettings({ ...settings, [key]: value });
     };
 
+    const handleDeliveryChange = (key: string, value: number) => {
+        setSettings({ ...settings, notifications: { ...(settings.notifications || {}), [key]: value * 100 } });
+    };
+
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
@@ -91,15 +95,29 @@ export default function AdminSettings() {
             </section>
 
             <section className="border editorial-rule bg-background shadow-soft p-8">
-                <h2 className="text-xs uppercase tracking-[.16em] text-muted-foreground mb-6">Operations</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <Label className="text-xs tracking-widest uppercase">Opening Time</Label>
-                        <Input value={settings?.opening_time || ""} onChange={(e) => handleChange("opening_time", e.target.value)} type="time" required className="h-12 border-editorial-rule shadow-none bg-secondary/20" />
+                <h2 className="text-xs uppercase tracking-[.16em] text-muted-foreground mb-6">Operations & Logistics</h2>
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label className="text-xs tracking-widest uppercase">Opening Time</Label>
+                            <Input value={settings?.opening_time || ""} onChange={(e) => handleChange("opening_time", e.target.value)} type="time" required className="h-12 border-editorial-rule shadow-none bg-secondary/20" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-xs tracking-widest uppercase">Closing Time</Label>
+                            <Input value={settings?.closing_time || ""} onChange={(e) => handleChange("closing_time", e.target.value)} type="time" required className="h-12 border-editorial-rule shadow-none bg-secondary/20" />
+                        </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label className="text-xs tracking-widest uppercase">Closing Time</Label>
-                        <Input value={settings?.closing_time || ""} onChange={(e) => handleChange("closing_time", e.target.value)} type="time" required className="h-12 border-editorial-rule shadow-none bg-secondary/20" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t editorial-rule pt-6">
+                        <div className="space-y-2">
+                            <Label className="text-xs tracking-widest uppercase text-ink">Flat Delivery Fee (₹)</Label>
+                            <Input type="number" min="0" value={settings?.notifications?.delivery_fee_paise !== undefined ? settings.notifications.delivery_fee_paise / 100 : 99} onChange={(e) => handleDeliveryChange("delivery_fee_paise", parseInt(e.target.value) || 0)} required className="h-12 border-editorial-rule shadow-none bg-secondary/20" />
+                            <p className="text-xs text-muted-foreground w-11/12 mt-1">Default flat rate applied to standard orders.</p>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-xs tracking-widest uppercase text-ink">Free Delivery Threshold (₹)</Label>
+                            <Input type="number" min="0" value={settings?.notifications?.free_shipping_threshold_paise !== undefined ? settings.notifications.free_shipping_threshold_paise / 100 : 1500} onChange={(e) => handleDeliveryChange("free_shipping_threshold_paise", parseInt(e.target.value) || 0)} required className="h-12 border-editorial-rule shadow-none bg-secondary/20" />
+                            <p className="text-xs text-muted-foreground w-11/12 mt-1">If cart subtotal hits this amount, shipping becomes FREE.</p>
+                        </div>
                     </div>
                 </div>
             </section>
