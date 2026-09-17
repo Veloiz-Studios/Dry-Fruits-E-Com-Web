@@ -60,7 +60,10 @@ export async function createOrder({ data: input }: { data: unknown }) {
   let cashfreeOrderId = number;
 
   if (appId && secretKey) {
-    // Generate Order in Cashfree
+    const origin = process.env.NEXT_PUBLIC_BASE_URL
+      || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null)
+      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
     const response = await fetch(`${baseUrl}/orders`, {
       method: "POST",
       headers: {
@@ -80,7 +83,7 @@ export async function createOrder({ data: input }: { data: unknown }) {
           customer_phone: data.phone,
         },
         order_meta: {
-          return_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/order/${cashfreeOrderId}?verify=true`
+          return_url: `${origin}/order/${cashfreeOrderId}?verify=true`
         }
       }),
     });
