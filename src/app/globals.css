@@ -151,12 +151,23 @@
     letter-spacing: 0;
     margin: 0;
     min-width: 320px;
+    overflow-x: hidden;
     background-image: radial-gradient(color-mix(in oklab, var(--foreground) 7%, transparent) 0.45px, transparent 0.45px);
     background-size: 5px 5px;
   }
 
-  h1, h2, h3 { font-family: var(--font-display); font-weight: 500; letter-spacing: 0; }
-  ::selection { background: var(--primary); color: var(--primary-foreground); }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+
+  ::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
 }
 
 @theme inline {
@@ -166,5 +177,10 @@
   --color-ink-soft: var(--ink-soft);
 }
 
-@utility editorial-rule { border-color: color-mix(in oklab, var(--foreground) 22%, transparent); }
-@utility shadow-soft { box-shadow: var(--shadow-soft); }
+@utility editorial-rule {
+  border-color: color-mix(in oklab, var(--foreground) 22%, transparent);
+}
+
+@utility shadow-soft {
+  box-shadow: var(--shadow-soft);
+}

@@ -26,13 +26,20 @@ export async function fetchDashboard() {
 export async function fetchAnalytics() {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Fetch all orders
-    const { data: orders, error } = await supabaseAdmin.from("orders").select("created_at, total_paise, payment_status, order_items(product_name, quantity)").order("created_at", { ascending: true });
+    // Fetch all orders with deep joins
+    const { data: orders, error } = await supabaseAdmin
+        .from("orders")
+        .select(`
+            created_at, total_paise, payment_status, order_number, customer_name,
+            order_items(product_name, quantity, products(categories(name)))
+        `)
+        .order("created_at", { ascending: true });
+
     if (error) throw error;
 
-    const paid = (orders || []).filter(o => o.payment_status === "paid" || o.payment_status === "pending"); // Keep simple, counting all real intents
+    const allOrders = orders || [];
+    const paid = allOrders.filter(o => o.payment_status === "paid" || o.payment_status === "pending");
 
-    // Daily Revenue Growth (Last 30 Days)
     const dailyMap: Record<string, { date: string, revenue: number, orders: number }> = {};
     const today = new Date();
     for (let i = 29; i >= 0; i--) {
@@ -42,8 +49,9 @@ export async function fetchAnalytics() {
         dailyMap[dateStr] = { date: dateStr, revenue: 0, orders: 0 };
     }
 
-    // Top Selling Products Breakdown
     const productFrequency: Record<string, number> = {};
+    const categoryFrequency: Record<string, number> = {};
+    let totalItemsSold = 0;
 
     for (const o of paid) {
         const dateStr = o.created_at.split("T")[0];
@@ -52,30 +60,41 @@ export async function fetchAnalytics() {
             dailyMap[dateStr].orders += 1;
         }
 
-        // Aggregate top sellers
         for (const item of (o.order_items || [])) {
             productFrequency[item.product_name] = (productFrequency[item.product_name] || 0) + item.quantity;
+            totalItemsSold += item.quantity;
+            // Aggregate Category Data
+            const catName = (item.products as any)?.categories?.name || "Unknown";
+            categoryFrequency[catName] = (categoryFrequency[catName] || 0) + item.quantity;
         }
     }
 
     const growth = Object.values(dailyMap);
+    const topProducts = Object.entries(productFrequency).map(([name, sales]) => ({ name, sales })).sort((a, b) => b.sales - a.sales).slice(0, 5);
+    const salesByCategory = Object.entries(categoryFrequency).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
 
-    // Sort top products
-    const topProducts = Object.entries(productFrequency)
-        .map(([name, sales]) => ({ name, sales }))
-        .sort((a, b) => b.sales - a.sales)
-        .slice(0, 5);
-
-    // Calculate Conversion or Total Stats
     const totalRevenue = paid.reduce((s, o) => s + (o.total_paise / 100), 0);
     const averageOrderValue = paid.length > 0 ? (totalRevenue / paid.length) : 0;
+    const avgItemsPerOrder = paid.length > 0 ? (totalItemsSold / paid.length) : 0;
+
+    // Format raw dumps for CSV export
+    const rawOrdersExport = allOrders.map(o => ({
+        OrderNumber: o.order_number,
+        Date: o.created_at,
+        Customer: o.customer_name,
+        Payment: o.payment_status,
+        Total: `Rs. ${o.total_paise / 100}`
+    }));
 
     return {
         totalRevenue,
         totalOrders: paid.length,
         averageOrderValue,
+        avgItemsPerOrder,
         growth,
-        topProducts
+        topProducts,
+        salesByCategory,
+        rawOrdersExport
     };
 }
 
