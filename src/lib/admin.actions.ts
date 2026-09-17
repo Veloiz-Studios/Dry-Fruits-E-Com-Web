@@ -170,7 +170,6 @@ export async function fetchOrders() {
 }
 
 export async function fetchSettings() {
-    await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin.from("business_settings").select("*").eq("id", true).single();
     if (error) throw error;
