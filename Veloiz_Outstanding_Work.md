@@ -29,16 +29,16 @@ These were core PRD requirements ("business owner manages everything without tou
 - **Status:** ✅ Built. Full CRUD sheet with real-time websocket syncing.
 
 ### 4. Inventory Page
-- [ ] Dedicated stock-level view per product/variant
-- [ ] Manual stock adjustment control
-- [ ] Low-stock flagging/alerts for the admin
-- **Status:** Stock is manageable via the Product Matrix, but a dedicated global overview table is still unbuilt.
+- [x] Dedicated stock-level view per product/variant
+- [x] Manual stock adjustment control
+- [x] Low-stock flagging/alerts for the admin
+- **Status:** ✅ Built. Fully integrated unified ledger with live syncing and low-stock auto-sorting.
 
 ### 5. Settings / Business Profile Page
-- [ ] Business name, owner name, phone, email, address, city
+- [x] Business name, owner name, phone, email, address, city
 - [ ] Logo upload
-- [ ] Opening/closing hours
-- **Status:** Explicitly a placeholder.
+- [x] Opening/closing hours
+- **Status:** ✅ Built. Responsive form manipulating the `business_settings` table securely. (Logo upload pending)
 
 ### 6. Admin Order Status Management
 - [x] UI to move an order through the pipeline: Pending → Confirmed → Processing → Shipped → Delivered
