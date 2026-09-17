@@ -126,3 +126,34 @@ export async function deleteProduct(productId: string) {
         throw new Error(error.message);
     }
 }
+
+export async function saveCategory(category: any) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const isNew = !category.id;
+
+    const cData = {
+        name: category.name,
+        slug: category.slug,
+        description: category.description || "",
+        image_url: category.image_url || null,
+        is_active: category.is_active,
+        display_order: category.display_order ?? 0,
+    };
+
+    if (isNew) {
+        const { error } = await supabaseAdmin.from("categories").insert(cData);
+        if (error) throw new Error(error.message);
+    } else {
+        const { error } = await supabaseAdmin.from("categories").update(cData).eq("id", category.id);
+        if (error) throw new Error(error.message);
+    }
+}
+
+export async function deleteCategory(categoryId: string) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("categories").delete().eq("id", categoryId);
+    if (error) {
+        if (error.code === '23503') throw new Error("Cannot delete category: It currently has products assigned to it. Please reassign or delete its products first.");
+        throw new Error(error.message);
+    }
+}
