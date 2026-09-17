@@ -72,14 +72,24 @@ export default function AdminOrders() {
                             {orders.map((order) => (
                                 <tr key={order.id} className="border-b editorial-rule last:border-b-0 hover:bg-secondary/20 transition duration-300">
                                     <td className="px-5 py-4 font-mono font-medium">{order.order_number}</td>
-                                    <td className="px-5 py-4">
-                                        <p>{order.customer_name}</p>
-                                        <p className="text-xs text-muted-foreground mt-1">{order.phone}</p>
+                                    <td className="px-5 py-6">
+                                        <div className="font-medium text-ink">{order.customer_name}</div>
+                                        <div className="text-xs text-muted-foreground mt-1 mb-3">
+                                            {order.email} • {order.phone}
+                                        </div>
+                                        {order.delivery_address && (
+                                            <div className="text-xs text-muted-foreground leading-relaxed bg-secondary/50 p-3 rounded-md w-max max-w-[240px]">
+                                                <div>{order.delivery_address.line1}</div>
+                                                <div>{order.delivery_address.city}, {order.delivery_address.state}</div>
+                                                <div className="font-mono mt-1">PIN: {order.delivery_address.pincode}</div>
+                                            </div>
+                                        )}
                                     </td>
-                                    <td className="px-5 py-4 text-xs">
+                                    <td className="px-5 py-6 text-xs">
                                         {order.order_items?.map((i: any, idx: number) => (
-                                            <div key={idx} className="mb-1 text-ink-soft">
-                                                {i.product_name} ({i.quantity}x)
+                                            <div key={idx} className="mb-2 text-ink">
+                                                <div className="font-medium">{i.product_name}</div>
+                                                <div className="text-muted-foreground">{i.weight_grams}g × <span className="font-mono">{i.quantity}</span></div>
                                             </div>
                                         ))}
                                     </td>
