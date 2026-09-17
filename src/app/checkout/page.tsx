@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ export default function Checkout() {
 
     // Dynamic Delivery Engine
     const [logistics, setLogistics] = useState({ fee: 99, threshold: 1500 });
-    import("react").then(r => r.useEffect(() => {
+    useEffect(() => {
         fetchSettings().then(s => {
             const notifs = s?.notifications as any;
             if (notifs) {
@@ -45,7 +45,7 @@ export default function Checkout() {
                 });
             }
         });
-    }, []));
+    }, []);
 
     const delivery = cart.subtotal >= logistics.threshold || cart.subtotal === 0 ? 0 : logistics.fee;
     const total = cart.subtotal + delivery;
