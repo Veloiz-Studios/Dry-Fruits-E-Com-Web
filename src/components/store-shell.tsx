@@ -40,6 +40,9 @@ export function StoreFooter() {
                     <p className="mt-6 text-xs opacity-50 uppercase tracking-widest">Store Hours:<br />{settings?.opening_time || '09:00'} - {settings?.closing_time || '19:00'}</p>
                 </div>
             </div>
+            <div className="border-t border-accent-foreground/10 px-5 py-6 text-center text-xs uppercase tracking-widest opacity-50 md:px-10">
+                Developed by <a href="https://www.veloizstudios.in/" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors hover:underline">Veloiz Studios</a>
+            </div>
         </footer>
     );
 }
