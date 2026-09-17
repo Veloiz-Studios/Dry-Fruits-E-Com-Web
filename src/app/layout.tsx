@@ -3,8 +3,6 @@ import "./globals.css";
 import { CartProvider } from "@/components/cart-context";
 import { Toaster } from "@/components/ui/sonner";
 
-import { CustomCursor } from "@/components/custom-cursor";
-
 export const metadata: Metadata = {
   title: "Veloiz — Dry fruits, chosen properly",
   description: "Premium dry fruits selected slowly and packed fresh.",
@@ -26,7 +24,6 @@ export default function RootLayout({
         <CartProvider>
           {children}
           <Toaster />
-          <CustomCursor />
         </CartProvider>
       </body>
     </html>
