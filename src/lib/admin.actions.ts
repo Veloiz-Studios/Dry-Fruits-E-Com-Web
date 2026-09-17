@@ -157,3 +157,9 @@ export async function deleteCategory(categoryId: string) {
         throw new Error(error.message);
     }
 }
+
+export async function updateOrderStatus(orderId: string, newStatus: string) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("orders").update({ order_status: newStatus }).eq("id", orderId);
+    if (error) throw new Error(error.message);
+}
