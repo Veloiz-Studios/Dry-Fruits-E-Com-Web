@@ -7,8 +7,7 @@ import { BarChart3, Boxes, LayoutGrid, LogOut, Package, Settings, ShoppingCart, 
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { checkAdminPhone } from "@/lib/orders.functions";
-import { clearAdminAuthCookie } from "@/lib/admin.actions";
+import { clearAdminAuthCookie, verifyAdminStatus } from "@/lib/admin.actions";
 
 const NAV = [
     { to: "/admin", label: "Dashboard", icon: LayoutGrid },
@@ -31,14 +30,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     useEffect(() => {
         supabase.auth.getUser().then(async ({ data: { user } }) => {
             setDebugContext(user);
-            if (!user || !user.phone) {
+            if (!user) {
                 setIsLoading(false);
                 return;
             }
 
             try {
-                // Call secure server action to bypass any broken database RLS rules
-                const isAllowed = await checkAdminPhone(user.phone);
+                const isAllowed = await verifyAdminStatus();
                 setAllowed(isAllowed);
             } catch (err) {
                 console.error(err);
@@ -63,7 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <p className="mt-4 text-muted-foreground">This account is not on the Veloiz admin allow-list.</p>
                 <div className="mt-6 p-4 bg-muted text-left text-xs font-mono overflow-auto rounded-md whitespace-pre-wrap word-break">
                     DEBUG INFO:
-                    <br />Authenticated Phone: {debugContext?.phone ?? "No phone found on object"}
+                    <br />Authenticated Email: {debugContext?.email ?? "No email found on object"}
                     <br />User ID: {debugContext?.id}
                 </div>
                 <Button className="mt-6 w-full" variant="ink" onClick={signOut}>Sign out & Try Again</Button>

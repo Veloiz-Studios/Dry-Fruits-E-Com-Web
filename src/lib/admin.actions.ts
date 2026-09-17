@@ -27,6 +27,15 @@ async function requireAdmin() {
     }
 }
 
+export async function verifyAdminStatus() {
+    try {
+        await requireAdmin();
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 
 
 export async function fetchDashboard() {
