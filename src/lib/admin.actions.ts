@@ -173,3 +173,28 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
         await supabaseAdmin.removeChannel(channel);
     }
 }
+
+export async function updateVariantStock(variantId: string, diff: number) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: v } = await supabaseAdmin.from("product_variants").select("stock_quantity").eq("id", variantId).single();
+    if (!v) throw new Error("Variant not found");
+    const newStock = Math.max(0, v.stock_quantity + diff);
+    const { error } = await supabaseAdmin.from("product_variants").update({ stock_quantity: newStock }).eq("id", variantId);
+    if (error) throw new Error(error.message);
+    return newStock;
+}
+
+export async function updateSettings(settings: any) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const payload = {
+        business_name: settings.business_name,
+        owner_name: settings.owner_name,
+        phone: settings.phone,
+        email: settings.email,
+        address: settings.address,
+        opening_time: settings.opening_time,
+        closing_time: settings.closing_time,
+    };
+    const { error } = await supabaseAdmin.from("business_settings").update(payload).eq("id", true);
+    if (error) throw new Error(error.message);
+}
