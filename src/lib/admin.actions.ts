@@ -127,7 +127,7 @@ export async function fetchOrders() {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
         .from("orders")
-        .select("id, order_number, customer_name, phone, email, delivery_address, total_paise, payment_status, order_status, created_at, order_items(product_name, weight_grams, quantity)")
+        .select("id, order_number, customer_name, phone, email, address, total_paise, payment_status, order_status, created_at, order_items(product_name, weight_grams, quantity)")
         .order("created_at", { ascending: false });
     if (error) throw error;
     return data ?? [];

@@ -77,11 +77,11 @@ export default function AdminOrders() {
                                         <div className="text-xs text-muted-foreground mt-1 mb-3">
                                             {order.email} • {order.phone}
                                         </div>
-                                        {order.delivery_address && (
+                                        {order.address && (
                                             <div className="text-xs text-muted-foreground leading-relaxed bg-secondary/50 p-3 rounded-md w-max max-w-[240px]">
-                                                <div>{order.delivery_address.line1}</div>
-                                                <div>{order.delivery_address.city}, {order.delivery_address.state}</div>
-                                                <div className="font-mono mt-1">PIN: {order.delivery_address.pincode}</div>
+                                                <div>{order.address.line1}</div>
+                                                <div>{order.address.city}, {order.address.state}</div>
+                                                <div className="font-mono mt-1">PIN: {order.address.pincode}</div>
                                             </div>
                                         )}
                                     </td>
