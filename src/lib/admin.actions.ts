@@ -1,7 +1,6 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { checkAdminPhone } from "./orders.functions";
 
 export async function setAdminAuthCookie(token: string) {
     (await cookies()).set("veloiz_admin_token", token, { httpOnly: true, secure: true, maxAge: 60 * 60 * 24 * 7 });
@@ -16,11 +15,16 @@ async function requireAdmin() {
     if (!token) throw new Error("Unauthorized: Missing Admin Token");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !data.user || !data.user.phone) throw new Error("Unauthorized: Invalid Token");
 
-    // Strict DB security context double-verification
-    const isAllowed = await checkAdminPhone(data.user.phone);
-    if (!isAllowed) throw new Error("Unauthorized: Phone number not on Veloiz Admin Allowlist");
+    if (error || !data.user || !data.user.email) {
+        throw new Error("Unauthorized: Invalid Token or missing email");
+    }
+
+    // Strict DB security context: User email MUST match Business Owner Email
+    const { data: settings } = await supabaseAdmin.from("business_settings").select("email").eq("id", true).single();
+    if (!settings?.email || data.user.email.toLowerCase() !== settings.email.toLowerCase()) {
+        throw new Error("Unauthorized: Account email is not the primary Veloiz owner.");
+    }
 }
 
 
@@ -283,7 +287,7 @@ export async function deleteCategory(categoryId: string) {
 export async function updateOrderStatus(orderId: string, newStatus: string) {
     await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin.from("orders").update({ order_status: newStatus }).eq("id", orderId).select("order_number").single();
+    const { data, error } = await supabaseAdmin.from("orders").update({ order_status: newStatus }).eq("id", orderId).select("order_number, email, customer_name").single();
     if (error) throw new Error(error.message);
 
     if (data?.order_number) {
@@ -294,6 +298,29 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
             payload: { order_status: newStatus }
         });
         await supabaseAdmin.removeChannel(channel);
+
+        // Send Email Notification via Resend
+        if (data.email && process.env.RESEND_API_KEY) {
+            try {
+                const { Resend } = await import("resend");
+                const resend = new Resend(process.env.RESEND_API_KEY);
+                await resend.emails.send({
+                    from: "Veloiz Orders <orders@veloiz.com>",
+                    to: data.email,
+                    subject: `Update on your Veloiz Order #${data.order_number}`,
+                    html: `
+                        <div style="font-family: sans-serif; padding: 30px; text-align: center; color: #222;">
+                            <h2 style="margin-bottom: 20px;">Hi ${data.customer_name},</h2>
+                            <p style="font-size: 16px; margin: 0;">Just a quick update: Your Veloiz order is now <b>${newStatus.toUpperCase()}</b>!</p>
+                            <p style="font-size: 14px; margin-top: 15px; color: #666;">You can track the live status anytime on our website.</p>
+                            <br/><p style="font-size: 12px; color: #999;">Thank you for shopping with Veloiz.</p>
+                        </div>
+                    `
+                });
+            } catch (err) {
+                console.error("Resend error:", err);
+            }
+        }
     }
 }
 
