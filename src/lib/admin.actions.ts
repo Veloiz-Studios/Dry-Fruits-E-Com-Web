@@ -27,12 +27,12 @@ async function requireAdmin() {
     }
 }
 
-export async function verifyAdminStatus() {
+export async function verifyAdminStatus(): Promise<{ allowed: boolean; reason?: string }> {
     try {
         await requireAdmin();
-        return true;
-    } catch {
-        return false;
+        return { allowed: true };
+    } catch (err: any) {
+        return { allowed: false, reason: err.message };
     }
 }
 

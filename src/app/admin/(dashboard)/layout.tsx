@@ -23,6 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const router = useRouter();
     const pathname = usePathname();
     const [allowed, setAllowed] = useState(false);
+    const [authReason, setAuthReason] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [debugContext, setDebugContext] = useState<any>(null);
     const [navOpen, setNavOpen] = useState(false);
@@ -36,8 +37,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             }
 
             try {
-                const isAllowed = await verifyAdminStatus();
-                setAllowed(isAllowed);
+                const result = await verifyAdminStatus();
+                setAllowed(result.allowed);
+                if (!result.allowed) setAuthReason(result.reason || "Unknown error");
             } catch (err) {
                 console.error(err);
             } finally {
@@ -63,6 +65,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     DEBUG INFO:
                     <br />Authenticated Email: {debugContext?.email ?? "No email found on object"}
                     <br />User ID: {debugContext?.id}
+                    <br /><br />REJECTION REASON:
+                    <br /><span className="text-destructive font-semibold">{authReason}</span>
                 </div>
                 <Button className="mt-6 w-full" variant="ink" onClick={signOut}>Sign out & Try Again</Button>
             </div>
