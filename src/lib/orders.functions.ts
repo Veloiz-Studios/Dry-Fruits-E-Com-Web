@@ -51,7 +51,7 @@ export async function createOrder({ data: input }: { data: unknown }) {
   const total = subtotal + delivery;
   const number = orderNumber();
 
-  const appId = process.env["CASHFREE_APP_ID"];
+  const appId = process.env["CASHFREE_APP_ID"] || process.env["NEXT_PUBLIC_CASHFREE_APP_ID"];
   const secretKey = process.env["CASHFREE_SECRET_KEY"];
   const env = process.env["CASHFREE_ENVIRONMENT"] || "SANDBOX";
   const baseUrl = env === "PRODUCTION" ? "https://api.cashfree.com/pg" : "https://sandbox.cashfree.com/pg";
@@ -123,7 +123,7 @@ export async function createOrder({ data: input }: { data: unknown }) {
 }
 
 export async function verifyPayment({ orderNumber }: { orderNumber: string }) {
-  const appId = process.env["CASHFREE_APP_ID"];
+  const appId = process.env["CASHFREE_APP_ID"] || process.env["NEXT_PUBLIC_CASHFREE_APP_ID"];
   const secretKey = process.env["CASHFREE_SECRET_KEY"];
   const env = process.env["CASHFREE_ENVIRONMENT"] || "SANDBOX";
   const baseUrl = env === "PRODUCTION" ? "https://api.cashfree.com/pg" : "https://sandbox.cashfree.com/pg";
