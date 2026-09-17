@@ -69,7 +69,7 @@ export default function Checkout() {
 
             if (!order.paymentConfigured || !order.paymentSessionId) {
                 toast.info("Order reserved. Online payment is not switched on yet.");
-                cart.clear();
+                setTimeout(() => cart.clear(), 100);
                 router.push("/order/" + order.orderNumber);
                 return;
             }
@@ -88,7 +88,7 @@ export default function Checkout() {
             });
 
             // Note: Cashfree automatically redirects to the return_url defined in the backend server action.
-            cart.clear(); // We can clear the cart safely now
+            setTimeout(() => cart.clear(), 500);
 
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Something went wrong.");
