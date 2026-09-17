@@ -74,7 +74,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <p className="font-display text-2xl font-semibold">VELOIZ</p>
                     <p className="hidden text-xs uppercase tracking-[.2em] text-muted-foreground lg:mt-1 lg:block">Trade desk</p>
                 </div>
-                <nav className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:px-3">
+                <nav className="flex flex-wrap gap-1 px-3 pb-3 lg:flex-col lg:px-3">
                     {NAV.map(({ to, label, icon: Icon }) => {
                         const isActive = to === "/admin" ? pathname === "/admin" : pathname.startsWith(to);
                         return (

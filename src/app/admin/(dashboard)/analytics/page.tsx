@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Pie, PieChart, Cell, Legend } from "recharts";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, TrendingUp, ShoppingBag, Banknote, Clock, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchAnalytics } from "@/lib/admin.actions";
 import { money } from "@/lib/catalog";
@@ -45,37 +45,45 @@ export default function AnalyticsDashboard() {
     return (
         <div className="space-y-8 pb-12">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h1 className="text-3xl font-display">Analytics Hub</h1>
+                <h1 className="text-3xl font-display">Analytics</h1>
                 <Button variant="outline" className="border-editorial-rule shadow-none bg-background shrink-0 font-medium" onClick={exportCsv}>
-                    <Download className="w-4 h-4 mr-2" /> Export Orders Data
+                    <Download className="w-4 h-4 mr-2" /> Export Orders CSV
                 </Button>
             </div>
 
-            {/* Top Level KPIs */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border border editorial-rule p-px shadow-soft">
-                <div className="bg-background p-6 lg:p-8">
-                    <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">Total Revenue</p>
-                    <p className="text-4xl font-display font-medium tracking-tight">{money(data.totalRevenue)}</p>
-                </div>
-                <div className="bg-background p-6 lg:p-8">
-                    <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">Total Orders</p>
-                    <p className="text-4xl font-display font-medium tracking-tight">{data.totalOrders}</p>
-                </div>
-                <div className="bg-background p-6 lg:p-8">
-                    <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">Average Order</p>
-                    <p className="text-4xl font-display font-medium tracking-tight">{money(data.averageOrderValue)}</p>
-                </div>
-                <div className="bg-background p-6 lg:p-8">
-                    <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">Items / Order</p>
-                    <p className="text-4xl font-display font-medium tracking-tight">{data.avgItemsPerOrder.toFixed(1)}</p>
-                </div>
-            </div>
+            {/* Masonry Layout Container */}
+            <div className="columns-1 md:columns-2 xl:columns-3 gap-8 space-y-8">
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                {/* 30-Day Revenue Trend */}
-                <section className="xl:col-span-2 border editorial-rule bg-background shadow-soft p-6 lg:p-8">
-                    <h2 className="text-sm uppercase tracking-widest mb-8 font-semibold">Revenue Growth (Last 30 Days)</h2>
-                    <div className="h-[340px] w-full">
+                {/* Dashboard KPIs Container (Masonry Block 1) */}
+                <div className="break-inside-avoid space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-background border editorial-rule p-6 shadow-soft flex flex-col justify-between h-32 rounded-sm">
+                            <div className="flex items-center text-[10px] uppercase tracking-widest text-muted-foreground font-semibold"><Banknote className="w-3.5 h-3.5 mr-2" /> Sales</div>
+                            <p className="text-3xl font-display font-medium tracking-tight text-ink">{money(data.totalRevenue)}</p>
+                        </div>
+                        <div className="bg-background border editorial-rule p-6 shadow-soft flex flex-col justify-between h-32 rounded-sm">
+                            <div className="flex items-center text-[10px] uppercase tracking-widest text-muted-foreground font-semibold"><ShoppingBag className="w-3.5 h-3.5 mr-2" /> Orders</div>
+                            <p className="text-3xl font-display font-medium tracking-tight text-ink">{data.totalOrders}</p>
+                        </div>
+                        <div className="bg-background border editorial-rule p-6 shadow-soft flex flex-col justify-between h-32 rounded-sm">
+                            <div className="flex items-center text-[10px] uppercase tracking-widest text-muted-foreground font-semibold"><TrendingUp className="w-3.5 h-3.5 mr-2" /> A.O.V</div>
+                            <p className="text-3xl font-display font-medium tracking-tight text-ink">{money(data.averageOrderValue)}</p>
+                        </div>
+                        <div className="bg-background border editorial-rule p-6 shadow-soft flex flex-col justify-between h-32 rounded-sm">
+                            <div className="flex items-center text-[10px] uppercase tracking-widest text-muted-foreground font-semibold"><Clock className="w-3.5 h-3.5 mr-2" /> Pending</div>
+                            <p className="text-3xl font-display font-medium tracking-tight text-ink">{data.pendingOrders}</p>
+                        </div>
+                        <div className="bg-background border editorial-rule p-6 shadow-soft flex flex-col justify-between h-32 rounded-sm col-span-2">
+                            <div className="flex items-center text-[10px] uppercase tracking-widest text-muted-foreground font-semibold"><Package className="w-3.5 h-3.5 mr-2" /> Live Products</div>
+                            <p className="text-3xl font-display font-medium tracking-tight text-ink">{data.activeProducts} SKUs mapped</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 30-Day Revenue Trend (Masonry Block 2 - usually spans wide if we used grid, but in masonry it just fits a column) */}
+                <section className="break-inside-avoid border editorial-rule bg-background shadow-soft p-6 lg:p-8 rounded-sm">
+                    <h2 className="text-sm uppercase tracking-widest mb-8 font-semibold">Revenue Trend (30d)</h2>
+                    <div className="h-[320px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={data.growth} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <defs>
@@ -98,48 +106,47 @@ export default function AnalyticsDashboard() {
                     </div>
                 </section>
 
-                <div className="space-y-8">
-                    {/* Sales By Category */}
-                    <section className="border editorial-rule bg-background shadow-soft p-6 lg:p-8">
-                        <h2 className="text-sm uppercase tracking-widest mb-6 font-semibold">Volume by Category</h2>
-                        <div className="h-[220px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie data={data.salesByCategory} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={2} stroke="none">
-                                        {data.salesByCategory?.map((_: any, index: number) => (
-                                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        formatter={(val: any) => [`${val} packs`, "Volume"]}
-                                        contentStyle={{ borderRadius: '4px', border: '1px solid #1a1a1a', padding: '10px' }}
-                                    />
-                                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px', marginTop: '10px' }} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </section>
+                {/* Sales By Category (Masonry Block 3) */}
+                <section className="break-inside-avoid border editorial-rule bg-background shadow-soft p-6 lg:p-8 rounded-sm">
+                    <h2 className="text-sm uppercase tracking-widest mb-6 font-semibold">Category Volume</h2>
+                    <div className="h-[280px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie data={data.salesByCategory} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={2} stroke="none">
+                                    {data.salesByCategory?.map((_: any, index: number) => (
+                                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip
+                                    formatter={(val: any) => [`${val} packs`, "Volume"]}
+                                    contentStyle={{ borderRadius: '4px', border: '1px solid #1a1a1a', padding: '10px' }}
+                                />
+                                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px', marginTop: '10px' }} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </section>
 
-                    {/* Top Selling Products */}
-                    <section className="border editorial-rule bg-background shadow-soft p-6 lg:p-8">
-                        <h2 className="text-sm uppercase tracking-widest mb-8 font-semibold">Top Movers (All-Time)</h2>
-                        <div className="h-[200px] w-full flex flex-col justify-end">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={data.topProducts} layout="vertical" margin={{ top: 0, right: 10, left: 20, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E5E5E5" />
-                                    <XAxis type="number" hide />
-                                    <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} width={130} tick={{ fontSize: 11, fill: '#1a1a1a' }} />
-                                    <Tooltip
-                                        formatter={(val: any) => [`${val} units sold`, "Volume"]}
-                                        contentStyle={{ borderRadius: '4px', border: '1px solid #1a1a1a', padding: '10px' }}
-                                        cursor={{ fill: '#f4f4f5' }}
-                                    />
-                                    <Bar dataKey="sales" fill="#1a1a1a" radius={[0, 4, 4, 0]} barSize={16} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </section>
-                </div>
+                {/* Top Selling Products (Masonry Block 4) */}
+                <section className="break-inside-avoid border editorial-rule bg-background shadow-soft p-6 lg:p-8 rounded-sm">
+                    <h2 className="text-sm uppercase tracking-widest mb-8 font-semibold">Top Movers (All-Time)</h2>
+                    <div className="h-[240px] w-full flex flex-col justify-end">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={data.topProducts} layout="vertical" margin={{ top: 0, right: 10, left: 20, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E5E5E5" />
+                                <XAxis type="number" hide />
+                                <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} width={130} tick={{ fontSize: 11, fill: '#1a1a1a' }} />
+                                <Tooltip
+                                    formatter={(val: any) => [`${val} units sold`, "Volume"]}
+                                    contentStyle={{ borderRadius: '4px', border: '1px solid #1a1a1a', padding: '10px' }}
+                                    cursor={{ fill: '#f4f4f5' }}
+                                />
+                                <Bar dataKey="sales" fill="#1a1a1a" radius={[0, 4, 4, 0]} barSize={16} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </section>
+
             </div>
         </div>
     );

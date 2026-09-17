@@ -26,18 +26,22 @@ export async function fetchDashboard() {
 export async function fetchAnalytics() {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Fetch all orders with deep joins
-    const { data: orders, error } = await supabaseAdmin
-        .from("orders")
-        .select(`
-            created_at, total_paise, payment_status, order_number, customer_name,
+    // Fetch all orders with deep joins, plus aggregate metadata queries
+    const [ordersRes, pendingRes, productsRes] = await Promise.all([
+        supabaseAdmin
+            .from("orders")
+            .select(`
+            created_at, total_paise, payment_status, order_number, customer_name, order_status,
             order_items(product_name, quantity, products(categories(name)))
         `)
-        .order("created_at", { ascending: true });
+            .order("created_at", { ascending: true }),
+        supabaseAdmin.from("orders").select("id", { count: "exact" }).in("order_status", ["pending", "processing"]),
+        supabaseAdmin.from("products").select("id", { count: "exact" }).eq("is_active", true)
+    ]);
 
-    if (error) throw error;
+    if (ordersRes.error) throw ordersRes.error;
 
-    const allOrders = orders || [];
+    const allOrders = ordersRes.data || [];
     const paid = allOrders.filter(o => o.payment_status === "paid" || o.payment_status === "pending");
 
     const dailyMap: Record<string, { date: string, revenue: number, orders: number }> = {};
@@ -90,7 +94,8 @@ export async function fetchAnalytics() {
         totalRevenue,
         totalOrders: paid.length,
         averageOrderValue,
-        avgItemsPerOrder,
+        pendingOrders: pendingRes.count || 0,
+        activeProducts: productsRes.count || 0,
         growth,
         topProducts,
         salesByCategory,
