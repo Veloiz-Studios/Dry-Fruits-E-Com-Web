@@ -32,7 +32,8 @@ export async function fetchAnalytics() {
             .from("orders")
             .select(`
             created_at, total_paise, payment_status, order_number, customer_name, order_status,
-            order_items(product_name, quantity, products(categories(name)))
+            phone, email, address,
+            order_items(product_name, quantity, weight_grams, products(categories(name)))
         `)
             .order("created_at", { ascending: true }),
         supabaseAdmin.from("orders").select("id", { count: "exact" }).in("order_status", ["pending", "processing"]),
@@ -86,7 +87,12 @@ export async function fetchAnalytics() {
         OrderNumber: o.order_number,
         Date: o.created_at,
         Customer: o.customer_name,
+        Phone: o.phone || '',
+        Email: o.email || '',
+        Address: o.address ? `${(o.address as any).line1}, ${(o.address as any).city}, ${(o.address as any).state} - ${(o.address as any).pincode}` : '',
+        Items: o.order_items ? o.order_items.map((i: any) => `${i.product_name} (${i.weight_grams}g x ${i.quantity})`).join(" | ") : '',
         Payment: o.payment_status,
+        Status: o.order_status,
         Total: `Rs. ${o.total_paise / 100}`
     }));
 

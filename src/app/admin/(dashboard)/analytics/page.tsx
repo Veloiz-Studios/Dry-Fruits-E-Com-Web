@@ -13,6 +13,7 @@ const PIE_COLORS = ["#1a1a1a", "#525252", "#737373", "#a3a3a3", "#d4d4d4", "#f5f
 export default function AnalyticsDashboard() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [exportRange, setExportRange] = useState("30d");
 
     useEffect(() => {
         fetchAnalytics().then(res => {
@@ -26,16 +27,33 @@ export default function AnalyticsDashboard() {
 
     const exportCsv = () => {
         if (!data?.rawOrdersExport?.length) return;
-        const keys = Object.keys(data.rawOrdersExport[0]);
+
+        // Filter locally based on exportRange state
+        let filteredOrders = data.rawOrdersExport;
+        if (exportRange !== "all") {
+            const cutoff = new Date();
+            if (exportRange === "24h") cutoff.setHours(cutoff.getHours() - 24);
+            if (exportRange === "7d") cutoff.setDate(cutoff.getDate() - 7);
+            if (exportRange === "30d") cutoff.setDate(cutoff.getDate() - 30);
+
+            filteredOrders = filteredOrders.filter((o: any) => new Date(o.Date) >= cutoff);
+        }
+
+        if (filteredOrders.length === 0) {
+            alert(`No orders found in the selected timeframe: ${exportRange}`);
+            return;
+        }
+
+        const keys = Object.keys(filteredOrders[0]);
         const csvRows = [
             keys.join(','),
-            ...data.rawOrdersExport.map((row: any) => keys.map(k => `"${(row[k] || '').toString()}"`).join(','))
+            ...filteredOrders.map((row: any) => keys.map(k => `"${(row[k] || '').toString()}"`).join(','))
         ];
         const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Veloiz_Orders_Export_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `Veloiz_Orders_Export_${exportRange}_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
         URL.revokeObjectURL(url);
     };
@@ -51,9 +69,21 @@ export default function AnalyticsDashboard() {
                     <h1 className="text-3xl font-bold tracking-tight text-ink">Intelligence Overview</h1>
                     <p className="text-sm text-muted-foreground mt-1">Real-time metrics and business analytics for Veloiz.</p>
                 </div>
-                <Button variant="outline" className="border shadow-sm bg-background hover:bg-secondary text-ink shrink-0 font-medium rounded-lg transition-all" onClick={exportCsv}>
-                    <Download className="w-4 h-4 mr-2 text-ink" /> Export CSV Report
-                </Button>
+                <div className="flex items-center gap-2">
+                    <select
+                        value={exportRange}
+                        onChange={(e) => setExportRange(e.target.value)}
+                        className="h-9 border editorial-rule rounded-md px-3 text-sm bg-background cursor-pointer focus:outline-none focus:border-ink"
+                    >
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d">Last 30 Days</option>
+                        <option value="all">All-Time Data</option>
+                    </select>
+                    <Button variant="outline" className="border shadow-sm bg-background hover:bg-secondary text-ink shrink-0 font-medium rounded-md transition-all h-9" onClick={exportCsv}>
+                        <Download className="w-4 h-4 mr-2" /> Export CSV
+                    </Button>
+                </div>
             </div>
 
             {/* Premium KPI Cards (Bento Style Grid) */}
