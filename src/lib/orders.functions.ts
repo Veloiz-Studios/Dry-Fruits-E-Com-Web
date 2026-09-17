@@ -94,38 +94,31 @@ export async function createOrder({ data: input }: { data: unknown }) {
     paymentSessionId = gatewayData.payment_session_id;
   }
 
-  const { data: order, error: orderError } = await supabaseAdmin
-    .from("orders")
-    .insert({
-      order_number: number,
-      customer_name: data.customer_name,
-      phone: data.phone,
-      email: data.email,
-      address: data.address,
-      subtotal_paise: subtotal,
-      delivery_paise: delivery,
-      total_paise: total,
-      cashfree_order_id: cashfreeOrderId,
-      cashfree_session_id: paymentSessionId,
-    })
-    .select("id, order_number")
-    .single();
+  const { data: orderId, error: rpcError } = await supabaseAdmin.rpc("create_order_atomic", {
+    p_order_number: number,
+    p_customer_name: data.customer_name,
+    p_phone: data.phone,
+    p_email: data.email,
+    p_address: data.address,
+    p_subtotal: subtotal,
+    p_delivery: delivery,
+    p_total: total,
+    p_cashfree_order_id: cashfreeOrderId,
+    p_cashfree_session_id: paymentSessionId ?? "",
+    p_items: lines
+  });
 
-  if (orderError || !order) throw new Error(orderError?.message ?? "Could not place order");
-
-  const { error: itemsError } = await supabaseAdmin
-    .from("order_items")
-    .insert(lines.map((l) => ({ ...l, order_id: order.id })));
-  if (itemsError) throw new Error(itemsError.message);
+  if (rpcError || !orderId) throw new Error(rpcError?.message ?? "Could not place order atomically");
 
   return {
-    orderId: order.id,
-    orderNumber: order.order_number,
+    orderId: String(orderId),
+    orderNumber: number,
     totalPaise: total,
     subtotalPaise: subtotal,
     deliveryPaise: delivery,
     paymentSessionId,
     paymentConfigured: Boolean(appId && secretKey),
+    cashfreeEnvironment: env, // Expose explicitly for the JS SDK configuration
   };
 }
 
@@ -188,4 +181,27 @@ export async function getOrderByNumber({ data: input }: { data: unknown }) {
     .eq("order_number", data.orderNumber)
     .maybeSingle();
   return order ?? null;
+}
+
+export async function checkAdminPhone(phone: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("admin_allowlist")
+    .select("phone")
+    .eq("phone", phone)
+    .maybeSingle();
+
+  if (error) console.error("Admin check error:", error);
+  return Boolean(data);
+}
+
+export async function getTrackedOrders(orderNumbers: string[]) {
+  if (!orderNumbers || orderNumbers.length === 0) return [];
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("orders")
+    .select("order_number, created_at, order_status, total_paise, order_items(product_name, quantity)")
+    .in("order_number", orderNumbers)
+    .order("created_at", { ascending: false });
+  return data ?? [];
 }
