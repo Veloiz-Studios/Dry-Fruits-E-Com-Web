@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, useMemo, useState, useEffect, type ReactNode } from "react";
+import { toast } from "sonner";
 import { priceFor, type Product } from "@/lib/catalog";
 
 export type CartItem = { product: Product; weight: number; quantity: number };
@@ -33,13 +34,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
     open,
     setOpen,
     add: (product, weight, quantity) => {
+      let limitReached = false;
       setItems(old => {
         const found = old.find(x => x.product.id === product.id && x.weight === weight);
-        return found ? old.map(x => x === found ? { ...x, quantity: x.quantity + quantity } : x) : [...old, { product, weight, quantity }];
+        const nextQ = found ? found.quantity + quantity : quantity;
+        if (nextQ > product.stock) {
+          limitReached = true;
+          // Cap at max stock
+          return found ? old.map(x => x === found ? { ...x, quantity: product.stock } : x) : [...old, { product, weight, quantity: product.stock }];
+        }
+        return found ? old.map(x => x === found ? { ...x, quantity: nextQ } : x) : [...old, { product, weight, quantity }];
       });
       setOpen(true);
+      if (limitReached) setTimeout(() => toast.error(`Only ${product.stock} packs left in stock!`), 100);
     },
-    change: (id, w, q) => setItems(old => old.map(x => x.product.id === id && x.weight === w ? { ...x, quantity: Math.max(1, q) } : x)),
+    change: (id, w, q) => {
+      let limitReached = false;
+      setItems(old => {
+        const maxStock = old.find(x => x.product.id === id)?.product.stock ?? 99;
+        const safeQ = q > maxStock ? maxStock : Math.max(1, q);
+        if (q > maxStock) limitReached = true;
+        return old.map(x => x.product.id === id && x.weight === w ? { ...x, quantity: safeQ } : x);
+      });
+      if (limitReached) setTimeout(() => toast.error("Maximum available stock reached!"), 100);
+    },
     remove: (id, w) => setItems(old => old.filter(x => !(x.product.id === id && x.weight === w))),
     count: items.reduce((a, x) => a + x.quantity, 0),
     subtotal: items.reduce((a, x) => a + priceFor(x.product, x.weight) * x.quantity, 0),

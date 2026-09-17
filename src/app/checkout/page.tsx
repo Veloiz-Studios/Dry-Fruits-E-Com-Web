@@ -57,7 +57,7 @@ export default function Checkout() {
         if (!cart.items.length) return;
         setBusy(true);
         try {
-            const order = await createOrder({
+            const order: any = await createOrder({
                 data: {
                     customer_name: form.customer_name,
                     phone: form.phone,
@@ -66,6 +66,13 @@ export default function Checkout() {
                     items: cart.items.map((item) => ({ slug: item.product.slug, weight: item.weight, quantity: item.quantity })),
                 },
             });
+
+            if (order.error) {
+                toast.error(order.error);
+                setStage("details");
+                setBusy(false);
+                return;
+            }
 
             if (!order.paymentConfigured || !order.paymentSessionId) {
                 toast.info("Order reserved. Online payment is not switched on yet.");

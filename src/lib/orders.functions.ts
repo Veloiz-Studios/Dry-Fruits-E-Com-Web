@@ -26,27 +26,34 @@ export async function createOrder({ data: input }: { data: unknown }) {
   const { data: rows, error } = await supabaseAdmin
     .from("product_variants")
     .select("id, weight_grams, price_paise, stock_quantity, products!inner(id, name, slug, is_active)");
-  if (error) throw new Error(error.message);
+  if (error) return { error: error.message };
 
+  let validationError: string | null = null;
   const lines = data.items.map((item) => {
     const variant = (rows ?? []).find(
       (r) => r.weight_grams === item.weight && (r.products as { slug: string }).slug === item.slug,
     );
-    if (!variant) throw new Error(`Unavailable item: ${item.slug}`);
-    const product = variant.products as unknown as { id: string; name: string; is_active: boolean };
-    if (!product.is_active) throw new Error(`Unavailable item: ${item.slug}`);
-    if (variant.stock_quantity < item.quantity) throw new Error(`Only ${variant.stock_quantity} left of ${product.name}`);
-    return {
-      product_id: product.id,
-      variant_id: variant.id,
-      product_name: product.name,
-      weight_grams: variant.weight_grams,
-      quantity: item.quantity,
-      unit_price_paise: variant.price_paise,
-    };
-  });
+    if (!variant) validationError = `Unavailable item: ${item.slug}`;
+    else {
+      const product = variant.products as unknown as { id: string; name: string; is_active: boolean };
+      if (!product.is_active) validationError = `Unavailable item: ${item.slug}`;
+      else if (variant.stock_quantity < item.quantity) validationError = `Only ${variant.stock_quantity} left of ${product.name}! Please reduce your cart quantity.`;
 
-  const subtotal = lines.reduce((sum, l) => sum + l.unit_price_paise * l.quantity, 0);
+      return {
+        product_id: product.id,
+        variant_id: variant.id,
+        product_name: product.name,
+        weight_grams: variant.weight_grams,
+        quantity: item.quantity,
+        unit_price_paise: variant.price_paise,
+      };
+    }
+    return null;
+  }).filter(Boolean);
+
+  if (validationError) return { error: validationError };
+
+  const subtotal = (lines as any[]).reduce((sum, l) => sum + l.unit_price_paise * l.quantity, 0);
   const delivery = subtotal >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_PAISE;
   const total = subtotal + delivery;
   const number = orderNumber();
@@ -108,10 +115,10 @@ export async function createOrder({ data: input }: { data: unknown }) {
     p_total: total,
     p_cashfree_order_id: cashfreeOrderId,
     p_cashfree_session_id: paymentSessionId ?? "",
-    p_items: lines
+    p_items: lines as any[]
   });
 
-  if (rpcError || !orderId) throw new Error(rpcError?.message ?? "Could not place order atomically");
+  if (rpcError || !orderId) return { error: rpcError?.message ?? "Could not place order atomically" };
 
   return {
     orderId: String(orderId),
