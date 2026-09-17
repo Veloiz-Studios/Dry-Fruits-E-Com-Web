@@ -151,7 +151,7 @@
     letter-spacing: 0;
     margin: 0;
     min-width: 320px;
-    overflow-x: hidden;
+    overflow-x: clip;
     background-image: radial-gradient(color-mix(in oklab, var(--foreground) 7%, transparent) 0.45px, transparent 0.45px);
     background-size: 5px 5px;
   }
