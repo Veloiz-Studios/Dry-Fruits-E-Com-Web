@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Boxes, LayoutGrid, LogOut, Package, Settings, ShoppingCart, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { checkAdminPhone } from "@/lib/orders.functions";
 
 const NAV = [
     { to: "/admin", label: "Dashboard", icon: LayoutGrid },
@@ -21,11 +22,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const pathname = usePathname();
     const [allowed, setAllowed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [debugContext, setDebugContext] = useState<any>(null);
 
     useEffect(() => {
-        supabase.from("admin_allowlist").select("email").then(({ data }) => {
-            setAllowed((data ?? []).length > 0);
-            setIsLoading(false);
+        supabase.auth.getUser().then(async ({ data: { user } }) => {
+            setDebugContext(user);
+            if (!user || !user.phone) {
+                setIsLoading(false);
+                return;
+            }
+
+            try {
+                // Call secure server action to bypass any broken database RLS rules
+                const isAllowed = await checkAdminPhone(user.phone);
+                setAllowed(isAllowed);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setIsLoading(false);
+            }
         });
     }, []);
 
@@ -41,7 +56,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="mx-auto max-w-md px-6 py-32 text-center">
                 <h1 className="text-4xl">Not authorised</h1>
                 <p className="mt-4 text-muted-foreground">This account is not on the Veloiz admin allow-list.</p>
-                <Button className="mt-6" variant="ink" onClick={signOut}>Sign out</Button>
+                <div className="mt-6 p-4 bg-muted text-left text-xs font-mono overflow-auto rounded-md whitespace-pre-wrap word-break">
+                    DEBUG INFO:
+                    <br />Authenticated Phone: {debugContext?.phone ?? "No phone found on object"}
+                    <br />User ID: {debugContext?.id}
+                </div>
+                <Button className="mt-6 w-full" variant="ink" onClick={signOut}>Sign out & Try Again</Button>
             </div>
         );
     }

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { ProductCard } from "@/components/product-card";
 import { StoreShell } from "@/components/store-shell";
-import { products } from "@/lib/catalog";
+import { useLiveCatalog } from "@/lib/useLiveCatalog";
 
 function ShopContent() {
     const searchParams = useSearchParams();
@@ -15,6 +15,8 @@ function ShopContent() {
     const [category, setCategory] = useState(initial);
     const [query, setQuery] = useState("");
     const [stock, setStock] = useState(false);
+
+    const { products, loading } = useLiveCatalog();
 
     const shown = useMemo(
         () =>
@@ -24,7 +26,7 @@ function ShopContent() {
                     p.name.toLowerCase().includes(query.toLowerCase()) &&
                     (!stock || p.stock > 0)
             ),
-        [category, query, stock]
+        [category, query, stock, products]
     );
 
     return (

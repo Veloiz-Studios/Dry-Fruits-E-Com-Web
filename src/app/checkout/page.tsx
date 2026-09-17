@@ -61,9 +61,10 @@ export default function Checkout() {
 
             setStage("paying");
 
-            // Load Cashfree JS SDK
+            // Load Cashfree JS SDK strictly in sync with the backend session's environment
+            const sdkMode = order.cashfreeEnvironment === "PRODUCTION" ? "production" : "sandbox";
             const cashfree = await load({
-                mode: process.env.NEXT_PUBLIC_CASHFREE_ENVIRONMENT === "PRODUCTION" ? "production" : "sandbox",
+                mode: sdkMode,
             });
 
             // Hand over the payment session to Cashfree SDK for redirect/modal checkout

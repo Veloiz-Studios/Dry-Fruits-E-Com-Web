@@ -194,7 +194,30 @@ export async function updateSettings(settings: any) {
         address: settings.address,
         opening_time: settings.opening_time,
         closing_time: settings.closing_time,
+        logo_url: settings.logo_url
     };
     const { error } = await supabaseAdmin.from("business_settings").update(payload).eq("id", true);
     if (error) throw new Error(error.message);
+}
+
+export async function uploadAdminImage(formData: FormData) {
+    const file = formData.get("file") as File;
+    if (!file) throw new Error("No file uploaded");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Autoprovision Bucket Safely
+    const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+    if (!buckets?.find(b => b.name === 'veloiz_media')) {
+        await supabaseAdmin.storage.createBucket('veloiz_media', { public: true, fileSizeLimit: 5242880, allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp'] });
+    }
+
+    const ext = file.name.split('.').pop();
+    const filePath = `${crypto.randomUUID()}.${ext}`;
+
+    const { error } = await supabaseAdmin.storage.from('veloiz_media').upload(filePath, file, { cacheControl: '3600', upsert: false });
+    if (error) throw new Error(error.message);
+
+    const { data: { publicUrl } } = supabaseAdmin.storage.from('veloiz_media').getPublicUrl(filePath);
+    return publicUrl;
 }

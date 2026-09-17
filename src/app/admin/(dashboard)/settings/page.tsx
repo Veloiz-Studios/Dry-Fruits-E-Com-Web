@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { ImageUploader } from "@/components/image-uploader";
 
 export default function AdminSettings() {
     const [settings, setSettings] = useState<any>(null);
@@ -61,6 +62,10 @@ export default function AdminSettings() {
                             <Label className="text-xs tracking-widest uppercase">Owner Name</Label>
                             <Input value={settings?.owner_name || ""} onChange={(e) => handleChange("owner_name", e.target.value)} className="h-12 border-editorial-rule shadow-none bg-secondary/20" />
                         </div>
+                    </div>
+                    <div>
+                        <Label className="text-xs tracking-widest uppercase block mb-3">Store Logo</Label>
+                        <ImageUploader url={settings?.logo_url || ""} onChange={(val) => handleChange("logo_url", val)} />
                     </div>
                 </div>
             </section>

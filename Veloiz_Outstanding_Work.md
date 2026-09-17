@@ -17,9 +17,9 @@ These were core PRD requirements ("business owner manages everything without tou
 - **Status:** ✅ Built. Full Server Action-powered CRUD overlay in the dashboard with Postgres error handling, responsive UI, and instant database syncing.
 
 ### 2. Product Image Upload Mechanism
-- [ ] Admin-facing image upload flow (Supabase Storage)
-- [ ] Save returned image URL to the correct product/variant record
-- **Status:** Not built.
+- [x] Admin-facing image upload flow (Supabase Storage)
+- [x] Save returned image URL to the correct product/variant record
+- **Status:** ✅ Built. Robust ImageUploader React component integrates directly with Supabase Storage, auto-provisioning the `veloiz_media` bucket. Wired into Products, Categories, and Settings (Logo).
 
 ### 3. Category Management
 - [x] Create category

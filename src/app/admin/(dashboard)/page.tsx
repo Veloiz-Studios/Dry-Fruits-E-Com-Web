@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { fetchDashboard, paise } from "@/lib/admin-data";
+import { fetchDashboard } from "@/lib/admin.actions";
+import { paise } from "@/lib/admin-data";
 
 export default function Dashboard() {
     const [data, setData] = useState<any>(null);

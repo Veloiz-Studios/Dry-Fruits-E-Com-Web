@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ImageUploader } from "@/components/image-uploader";
 import { saveProduct, deleteProduct, fetchProducts, fetchCategories } from "@/lib/admin.actions";
 
 export default function AdminProducts() {
@@ -149,13 +150,22 @@ export default function AdminProducts() {
                             {products.map((product) => (
                                 <tr key={product.id} className="border-b editorial-rule last:border-b-0 hover:bg-secondary/20 transition duration-300">
                                     <td className="px-5 py-4 align-top">
-                                        <div className="flex items-center gap-3">
-                                            <p className="font-display text-xl font-medium">{product.name}</p>
-                                            {!product.is_active && (
-                                                <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[9px] font-bold uppercase tracking-widest rounded-sm border border-yellow-200 shadow-sm">Unpublished</span>
+                                        <div className="flex items-start gap-4">
+                                            {product.image_urls && product.image_urls.length > 0 ? (
+                                                <img src={product.image_urls[0]} alt={product.name} className="w-16 h-16 object-cover rounded border editorial-rule p-1 shrink-0 bg-background" />
+                                            ) : (
+                                                <div className="w-16 h-16 rounded border editorial-rule bg-secondary/30 shrink-0" />
                                             )}
+                                            <div>
+                                                <div className="flex items-center gap-3">
+                                                    <p className="font-display text-xl font-medium">{product.name}</p>
+                                                    {!product.is_active && (
+                                                        <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[9px] font-bold uppercase tracking-widest rounded-sm border border-yellow-200 shadow-sm">Unpublished</span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground mt-2 max-w-xs">{product.short_description}</p>
+                                            </div>
                                         </div>
-                                        <p className="text-xs text-muted-foreground mt-1 max-w-xs">{product.short_description}</p>
                                         <span className={`md:hidden mt-3 inline-block px-2 py-0.5 text-[10px] rounded-full ${product.is_active ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'}`}>
                                             {product.is_active ? 'Active' : 'Draft'}
                                         </span>
@@ -234,10 +244,21 @@ export default function AdminProducts() {
                                         <Input value={form.short_description} onChange={e => setForm({ ...form, short_description: e.target.value })} className="mt-2 h-12 bg-background border-editorial-rule shadow-none" placeholder="Catchy one liner" />
                                     </div>
                                 </div>
-                                <div className="grid sm:grid-cols-2 gap-4">
-                                    <div className="flex items-center justify-between border bg-background mt-4 px-4 h-12">
-                                        <Label className="text-sm font-semibold uppercase tracking-widest">Published</Label>
-                                        <Switch checked={form.is_active} onCheckedChange={c => setForm({ ...form, is_active: c })} />
+                                <div className="space-y-4">
+                                    <div className="space-y-2 flex items-center justify-between border editorial-rule p-4 bg-secondary/10">
+                                        <div className="space-y-0.5">
+                                            <Label>Visibility</Label>
+                                            <p className="text-xs text-muted-foreground">Is this product published for sale?</p>
+                                        </div>
+                                        <Switch checked={form.is_active} onCheckedChange={e => setForm({ ...form, is_active: e })} />
+                                    </div>
+                                    <div className="space-y-2 pt-4">
+                                        <Label>Product Feature Image</Label>
+                                        <ImageUploader
+                                            url={form.image_urls?.[0] || ""}
+                                            onChange={(val) => setForm({ ...form, image_urls: val ? [val] : [] })}
+                                        />
+                                        <p className="text-xs text-muted-foreground mt-2">This is the primary image shown on the storefront.</p>
                                     </div>
                                 </div>
                                 <div>

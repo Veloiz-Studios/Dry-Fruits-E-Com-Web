@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { ImageUploader } from "@/components/image-uploader";
 import { saveCategory, deleteCategory, fetchCategories } from "@/lib/admin.actions";
 
 export default function AdminCategories() {
@@ -54,6 +55,7 @@ export default function AdminCategories() {
                 name: "",
                 slug: "",
                 description: "",
+                image_url: "",
                 is_active: true,
                 display_order: categories.length * 10
             });
@@ -117,14 +119,23 @@ export default function AdminCategories() {
                             {categories.map((cat) => (
                                 <tr key={cat.id} className="border-b editorial-rule last:border-b-0 hover:bg-secondary/20 transition duration-300">
                                     <td className="px-5 py-4 align-top">
-                                        <div className="flex items-center gap-3">
-                                            <p className="font-display text-xl font-medium">{cat.name}</p>
-                                            {!cat.is_active && (
-                                                <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[9px] font-bold uppercase tracking-widest rounded-sm border border-yellow-200 shadow-sm">Hidden</span>
+                                        <div className="flex items-center gap-4">
+                                            {cat.image_url ? (
+                                                <img src={cat.image_url} alt={cat.name} className="w-12 h-12 object-cover rounded border editorial-rule p-1 shrink-0 bg-background" />
+                                            ) : (
+                                                <div className="w-12 h-12 rounded border editorial-rule bg-secondary/30 shrink-0" />
                                             )}
+                                            <div>
+                                                <div className="flex items-center gap-3">
+                                                    <p className="font-display text-xl font-medium">{cat.name}</p>
+                                                    {!cat.is_active && (
+                                                        <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[9px] font-bold uppercase tracking-widest rounded-sm border border-yellow-200 shadow-sm">Hidden</span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs font-mono text-muted-foreground mt-1">/{cat.slug}</p>
+                                                <p className="text-xs text-muted-foreground mt-2 max-w-sm">{cat.description}</p>
+                                            </div>
                                         </div>
-                                        <p className="text-xs font-mono text-muted-foreground mt-1">/{cat.slug}</p>
-                                        <p className="text-xs text-muted-foreground mt-2 max-w-sm">{cat.description}</p>
                                     </td>
                                     <td className="px-5 py-4 text-center align-middle hidden md:table-cell">
                                         <span className="font-mono text-lg">{cat.products?.length || 0}</span>
@@ -173,6 +184,12 @@ export default function AdminCategories() {
                                     <div className="flex items-center justify-between border bg-background mt-6 px-4 h-12">
                                         <Label className="text-sm font-semibold uppercase tracking-widest">Visible on Store</Label>
                                         <Switch checked={form.is_active} onCheckedChange={c => setForm({ ...form, is_active: c })} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label className="text-xs uppercase tracking-widest text-muted-foreground">Category Photo</Label>
+                                    <div className="mt-2">
+                                        <ImageUploader url={form.image_url} onChange={(val) => setForm({ ...form, image_url: val })} />
                                     </div>
                                 </div>
                                 <div>

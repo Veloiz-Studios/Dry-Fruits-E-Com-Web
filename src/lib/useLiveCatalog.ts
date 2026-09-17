@@ -31,7 +31,7 @@ export function useLiveCatalog() {
         const { data, error } = await supabase
             .from("products")
             .select(`
-                id, slug, name, short_description, long_description,
+                id, slug, name, short_description, long_description, image_urls,
                 categories(name),
                 product_variants(weight_grams, price_paise, stock_quantity)
             `)
@@ -66,7 +66,7 @@ export function useLiveCatalog() {
                 slug: p.slug,
                 name: p.name,
                 category: p.categories?.name ?? "General",
-                image: imageFallback.src,
+                image: (p.image_urls && p.image_urls.length > 0) ? p.image_urls[0] : imageFallback.src,
                 short: p.short_description,
                 long: p.long_description,
                 stock: totalStock, // Cumulative availability
