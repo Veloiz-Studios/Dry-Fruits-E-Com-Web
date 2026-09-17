@@ -7,6 +7,7 @@ import { BarChart3, Boxes, LayoutGrid, LogOut, Package, Settings, ShoppingCart, 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { checkAdminPhone } from "@/lib/orders.functions";
+import { clearAdminAuthCookie } from "@/lib/admin.actions";
 
 const NAV = [
     { to: "/admin", label: "Dashboard", icon: LayoutGrid },
@@ -47,6 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     async function signOut() {
         await supabase.auth.signOut();
+        await clearAdminAuthCookie();
         router.push("/admin/login");
     }
 

@@ -1,6 +1,32 @@
 "use server";
 
+import { cookies } from "next/headers";
+import { checkAdminPhone } from "./orders.functions";
+
+export async function setAdminAuthCookie(token: string) {
+    cookies().set("veloiz_admin_token", token, { httpOnly: true, secure: true, maxAge: 60 * 60 * 24 * 7 });
+}
+
+export async function clearAdminAuthCookie() {
+    cookies().delete("veloiz_admin_token");
+}
+
+async function requireAdmin() {
+    const token = cookies().get("veloiz_admin_token")?.value;
+    if (!token) throw new Error("Unauthorized: Missing Admin Token");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (error || !data.user || !data.user.phone) throw new Error("Unauthorized: Invalid Token");
+    
+    // Strict DB security context double-verification
+    const isAllowed = await checkAdminPhone(data.user.phone);
+    if (!isAllowed) throw new Error("Unauthorized: Phone number not on Veloiz Admin Allowlist");
+}
+
+
+
 export async function fetchDashboard() {
+    await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const [ordersRes, variantsRes, productsRes] = await Promise.all([
@@ -24,6 +50,7 @@ export async function fetchDashboard() {
 }
 
 export async function fetchAnalytics() {
+    await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Fetch all orders with deep joins, plus aggregate metadata queries
@@ -110,6 +137,7 @@ export async function fetchAnalytics() {
 }
 
 export async function fetchProducts() {
+    await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
         .from("products")
@@ -120,6 +148,7 @@ export async function fetchProducts() {
 }
 
 export async function fetchCategories() {
+    await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
         .from("categories")
@@ -130,6 +159,7 @@ export async function fetchCategories() {
 }
 
 export async function fetchOrders() {
+    await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
         .from("orders")
@@ -140,6 +170,7 @@ export async function fetchOrders() {
 }
 
 export async function fetchSettings() {
+    await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin.from("business_settings").select("*").eq("id", true).single();
     if (error) throw error;
@@ -147,6 +178,7 @@ export async function fetchSettings() {
 }
 
 export async function saveProduct(product: any) {
+    await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const isNew = !product.id;
     let productId = product.id;
@@ -207,6 +239,7 @@ export async function saveProduct(product: any) {
 }
 
 export async function deleteProduct(productId: string) {
+    await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("products").delete().eq("id", productId);
     if (error) {
@@ -216,6 +249,7 @@ export async function deleteProduct(productId: string) {
 }
 
 export async function saveCategory(category: any) {
+    await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const isNew = !category.id;
 
@@ -238,6 +272,7 @@ export async function saveCategory(category: any) {
 }
 
 export async function deleteCategory(categoryId: string) {
+    await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("categories").delete().eq("id", categoryId);
     if (error) {
@@ -247,6 +282,7 @@ export async function deleteCategory(categoryId: string) {
 }
 
 export async function updateOrderStatus(orderId: string, newStatus: string) {
+    await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin.from("orders").update({ order_status: newStatus }).eq("id", orderId).select("order_number").single();
     if (error) throw new Error(error.message);

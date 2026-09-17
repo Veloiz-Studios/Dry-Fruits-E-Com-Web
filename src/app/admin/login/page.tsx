@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { setAdminAuthCookie } from "@/lib/admin.actions";
 import cover from "@/assets/veloiz-pistachios.jpg";
 
 export default function SignIn() {
@@ -33,9 +34,18 @@ export default function SignIn() {
         event.preventDefault();
         setBusy(true);
         const formattedPhone = phone.startsWith("+") ? phone : `+91${phone}`;
-        const { error } = await supabase.auth.verifyOtp({ phone: formattedPhone, token: otp, type: 'sms' });
+        const { data, error } = await supabase.auth.verifyOtp({ phone: formattedPhone, token: otp, type: 'sms' });
+
+        if (error) {
+            setBusy(false);
+            return toast.error(error.message);
+        }
+
+        if (data?.session?.access_token) {
+            await setAdminAuthCookie(data.session.access_token);
+        }
+
         setBusy(false);
-        if (error) return toast.error(error.message);
         router.push("/admin");
     }
 
