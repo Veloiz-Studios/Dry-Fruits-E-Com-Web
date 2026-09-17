@@ -82,9 +82,10 @@ export default function Checkout() {
                 mode: sdkMode,
             });
 
-            // Hand over the payment session to Cashfree SDK for redirect/modal checkout
+            // Hand over the payment session to Cashfree SDK for a robust full-page redirect
             cashfree.checkout({
                 paymentSessionId: order.paymentSessionId,
+                redirectTarget: "_self",
             });
 
             // Note: Cashfree automatically redirects to the return_url defined in the backend server action.
