@@ -4,20 +4,20 @@ import { cookies } from "next/headers";
 import { checkAdminPhone } from "./orders.functions";
 
 export async function setAdminAuthCookie(token: string) {
-    cookies().set("veloiz_admin_token", token, { httpOnly: true, secure: true, maxAge: 60 * 60 * 24 * 7 });
+    (await cookies()).set("veloiz_admin_token", token, { httpOnly: true, secure: true, maxAge: 60 * 60 * 24 * 7 });
 }
 
 export async function clearAdminAuthCookie() {
-    cookies().delete("veloiz_admin_token");
+    (await cookies()).delete("veloiz_admin_token");
 }
 
 async function requireAdmin() {
-    const token = cookies().get("veloiz_admin_token")?.value;
+    const token = (await cookies()).get("veloiz_admin_token")?.value;
     if (!token) throw new Error("Unauthorized: Missing Admin Token");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin.auth.getUser(token);
     if (error || !data.user || !data.user.phone) throw new Error("Unauthorized: Invalid Token");
-    
+
     // Strict DB security context double-verification
     const isAllowed = await checkAdminPhone(data.user.phone);
     if (!isAllowed) throw new Error("Unauthorized: Phone number not on Veloiz Admin Allowlist");
