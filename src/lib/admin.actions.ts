@@ -70,7 +70,7 @@ export async function fetchAnalytics() {
     if (ordersRes.error) throw ordersRes.error;
 
     const allOrders = ordersRes.data || [];
-    const paid = allOrders.filter(o => o.payment_status === "paid" || o.payment_status === "pending");
+    const paid = allOrders.filter(o => o.payment_status === "paid");
 
     const dailyMap: Record<string, { date: string, revenue: number, orders: number }> = {};
     const today = new Date();
