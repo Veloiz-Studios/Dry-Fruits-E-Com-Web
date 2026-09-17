@@ -74,11 +74,24 @@ export default function Confirmation({ params }: { params: Promise<{ number: str
                     <>
                         <p className="text-xs uppercase tracking-[.2em]">Order {data.order_number}</p>
                         <h1 className="mt-4 text-5xl leading-[.9] md:text-7xl">Thank you, {data.customer_name.split(" ")[0]}.</h1>
-                        <p className="mt-6 max-w-lg text-lg text-ink-soft">
+                        <div className="mt-6 max-w-lg text-lg text-ink-soft">
                             {data.payment_status === "paid"
                                 ? "Payment received. We are packing your order this week."
                                 : "Your order is reserved. It will be confirmed as soon as payment is completed."}
-                        </p>
+
+                            {data.payment_status === "pending" && data.cashfree_session_id && (
+                                <div className="mt-4">
+                                    <Button onClick={async () => {
+                                        // @ts-expect-error Types not provided by cashfree package
+                                        const { load } = await import('@cashfreepayments/cashfree-js');
+                                        const cashfree = await load({ mode: data.env === "PRODUCTION" ? "production" : "sandbox" });
+                                        cashfree.checkout({ paymentSessionId: data.cashfree_session_id, redirectTarget: "_self" });
+                                    }} variant="ink" size="lg">
+                                        Resume Payment
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
 
                         <ol className="mt-14 grid gap-px border editorial-rule bg-border sm:grid-cols-5">
                             {ORDER_PIPELINE.map((stage, index) => {

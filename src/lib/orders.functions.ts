@@ -186,11 +186,15 @@ export async function getOrderByNumber({ data: input }: { data: unknown }) {
   const { data: order } = await supabaseAdmin
     .from("orders")
     .select(
-      "order_number, customer_name, email, phone, address, subtotal_paise, delivery_paise, total_paise, payment_status, order_status, created_at, order_items(product_name, weight_grams, quantity, unit_price_paise)",
+      "order_number, customer_name, email, phone, address, subtotal_paise, delivery_paise, total_paise, payment_status, order_status, created_at, cashfree_session_id, order_items(product_name, weight_grams, quantity, unit_price_paise)",
     )
     .eq("order_number", data.orderNumber)
     .maybeSingle();
-  return order ?? null;
+
+  if (order) {
+    return { ...order, env: process.env["CASHFREE_ENVIRONMENT"] || "SANDBOX" };
+  }
+  return null;
 }
 
 export async function checkAdminPhone(phone: string) {
